@@ -1,6 +1,12 @@
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
 
+#[derive(Clone, Copy, PartialEq)]
+pub enum ViewMode {
+    List,
+    Grid,
+}
+
 pub struct AppState {
     pub username: Option<String>,
     pub saved_tracks: Vec<(String, String)>, // (track name, artist name)
@@ -9,6 +15,7 @@ pub struct AppState {
     pub tracks_window_size: (f32, f32),
     pub total_tracks: Option<i32>,
     pub is_loading: bool,  // Add loading state
+    pub view_mode: ViewMode,
 }
 
 impl Default for AppState {
@@ -21,6 +28,7 @@ impl Default for AppState {
             tracks_window_size: (400.0, 600.0), // Increased window size
             total_tracks: None,
             is_loading: false,  // Initialize loading state
+            view_mode: ViewMode::List,
         }
     }
 }
