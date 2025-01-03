@@ -43,18 +43,21 @@ impl eframe::App for SpotifyApp {
                                     });
                                 } else {
                                     for (track, artists) in &tracks {
-                                        ui.horizontal(|ui| {
-                                            let text = format!("{} - {}", track, artists);
-                                            let available_width = ui.available_width();
-                                            let text_width = ui.fonts(|fonts| fonts.layout_no_wrap(text.clone(), egui::FontId::default(), egui::Color32::WHITE).size().x);
-                                            let truncated_text = if text_width > available_width {
-                                                format!("{}...", &text[..(available_width as usize / 10)]) // Approximation
-                                            } else {
-                                                text
-                                            };
-                                            ui.add(egui::Label::new(truncated_text).wrap(false));
+                                        ui.vertical(|ui| {
+                                            ui.add(egui::Label::new(
+                                                egui::RichText::new(track)
+                                                    .size(16.0)
+                                                    .strong()
+                                            ));
+                                            ui.add(egui::Label::new(
+                                                egui::RichText::new(artists)
+                                                    .size(14.0)
+                                                    .color(egui::Color32::LIGHT_GRAY)
+                                            ));
                                         });
+                                        ui.add_space(4.0);
                                         ui.separator();
+                                        ui.add_space(4.0);
                                     }
                                 }
                             });

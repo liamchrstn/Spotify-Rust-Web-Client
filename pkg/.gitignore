@@ -1,15 +1,1 @@
-# Ignore everything
 *
-
-# But not these files...
-!.gitignore
-!favicon.ico
-!index.html
-!README.md
-!package.json
-!package-lock.json
-!*.js
-!*.css
-!favicon.png
-# Even if they are in subdirectories
-!*/

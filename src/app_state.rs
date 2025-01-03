@@ -17,7 +17,7 @@ impl Default for AppState {
             saved_tracks: Vec::new(),
             show_tracks: false,
             tracks_window_open: false,
-            tracks_window_size: (200.0, 400.0), // Changed from 300.0 to 200.0
+            tracks_window_size: (400.0, 600.0), // Increased window size
             is_loading: false,  // Initialize loading state
         }
     }
