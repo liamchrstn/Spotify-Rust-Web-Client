@@ -2,6 +2,7 @@ use crate::models::{UserProfile, SavedTracksResponse};
 use crate::utils::{log_error, clear_token_and_redirect};
 use crate::app_state::{APP_STATE, set_username};
 use reqwest::Client;
+use std::time::Duration;
 
 pub async fn fetch_user_profile(token: String) {
     let client = Client::new();
@@ -40,64 +41,84 @@ pub async fn fetch_saved_tracks(token: String) {
     {
         let mut state = APP_STATE.lock().unwrap();
         state.is_loading = true;
+        state.show_tracks = true;  // Show window immediately
     }
 
     let client = reqwest::Client::new();
-    
-    // Only fetch first 50 tracks
-    let url = "https://api.spotify.com/v1/me/tracks?limit=50&offset=0";
-    let response = client
-        .get(url)
-        .header("Authorization", format!("Bearer {}", token))
-        .send()
-        .await;
+    let mut offset = 0;
+    let limit = 50;
 
-    match response {
-        Ok(response) => {
-            match response.status().as_u16() {
-                200 => {
-                    match response.json::<SavedTracksResponse>().await {
-                        Ok(tracks) => {
-                            let track_info: Vec<(String, String)> = tracks.items
-                                .into_iter()
-                                .map(|item| {
-                                    let artists = item.track.artists
-                                        .iter()
-                                        .map(|artist| artist.name.clone())
-                                        .collect::<Vec<_>>()
-                                        .join(", ");
-                                    (item.track.name, artists)
-                                })
-                                .collect();
-                            
-                            let mut state = APP_STATE.lock().unwrap();
-                            state.saved_tracks = track_info;
-                            state.show_tracks = true;
-                            state.is_loading = false;  // Set loading to false when done
-                        }
-                        Err(err) => {
-                            let mut state = APP_STATE.lock().unwrap();
-                            state.is_loading = false;  // Set loading to false on error
-                            log_error(&format!("Failed to parse saved tracks: {:?}", err));
+    loop {
+        // Add small delay between requests
+        gloo_timers::future::TimeoutFuture::new(100).await;
+
+        let url = format!(
+            "https://api.spotify.com/v1/me/tracks?limit={}&offset={}",
+            limit, offset
+        );
+        
+        let response = client
+            .get(&url)
+            .header("Authorization", format!("Bearer {}", token))
+            .send()
+            .await;
+
+        match response {
+            Ok(response) => {
+                match response.status().as_u16() {
+                    200 => {
+                        match response.json::<SavedTracksResponse>().await {
+                            Ok(tracks) => {
+                                let track_info: Vec<(String, String)> = tracks.items
+                                    .into_iter()
+                                    .map(|item| {
+                                        let artists = item.track.artists
+                                            .iter()
+                                            .map(|artist| artist.name.clone())
+                                            .collect::<Vec<_>>()
+                                            .join(", ");
+                                        (item.track.name, artists)
+                                    })
+                                    .collect();
+                                
+                                let mut state = APP_STATE.lock().unwrap();
+                                state.total_tracks = Some(tracks.total);
+                                state.saved_tracks.extend(track_info);
+                                
+                                if offset + limit >= tracks.total as usize {
+                                    state.is_loading = false;
+                                    break;
+                                }
+                                offset += limit;
+                            }
+                            Err(err) => {
+                                let mut state = APP_STATE.lock().unwrap();
+                                state.is_loading = false;
+                                log_error(&format!("Failed to parse saved tracks: {:?}", err));
+                                break;
+                            }
                         }
                     }
-                }
-                401 => {
-                    let mut state = APP_STATE.lock().unwrap();
-                    state.is_loading = false;  // Set loading to false on error
-                    clear_token_and_redirect();
-                }
-                status => {
-                    let mut state = APP_STATE.lock().unwrap();
-                    state.is_loading = false;  // Set loading to false on error
-                    log_error(&format!("Failed to fetch saved tracks: {}", status));
+                    401 => {
+                        let mut state = APP_STATE.lock().unwrap();
+                        state.is_loading = false;
+                        clear_token_and_redirect();
+                        break;
+                    }
+                    status => {
+                        let mut state = APP_STATE.lock().unwrap();
+                        state.is_loading = false;
+                        log_error(&format!("Failed to fetch saved tracks: {}", status));
+                        break;
+                    }
                 }
             }
-        }
-        Err(err) => {
-            let mut state = APP_STATE.lock().unwrap();
-            state.is_loading = false;  // Set loading to false on error
-            log_error(&format!("Request error: {:?}", err));
+            Err(err) => {
+                let mut state = APP_STATE.lock().unwrap();
+                state.is_loading = false;
+                log_error(&format!("Request error: {:?}", err));
+                break;
+            }
         }
     }
 }

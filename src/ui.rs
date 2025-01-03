@@ -29,36 +29,55 @@ impl eframe::App for SpotifyApp {
                     let tracks = state.saved_tracks.clone();
                     let window_size = state.tracks_window_size;
                     let is_loading = state.is_loading;
+                    let total_tracks = state.total_tracks;
                     
                     egui::Window::new("Saved Tracks")
                         .open(&mut state.tracks_window_open)
                         .default_size(window_size)
                         .resizable(true)
                         .show(ctx, |ui| {
+                            if is_loading {
+                                ui.horizontal(|ui| {
+                                    ui.spinner();
+                                    if let Some(total) = total_tracks {
+                                        ui.label(format!(
+                                            "Loading tracks... ({} of {} loaded)", 
+                                            tracks.len(), 
+                                            total
+                                        ));
+                                    } else {
+                                        ui.label("Loading tracks...");
+                                    }
+                                });
+                                ui.add_space(8.0);
+                                ui.separator();
+                                ui.add_space(8.0);
+                            }
+
                             egui::ScrollArea::vertical().show(ui, |ui| {
+                                for (track, artists) in &tracks {
+                                    ui.vertical(|ui| {
+                                        ui.add(egui::Label::new(
+                                            egui::RichText::new(track)
+                                                .size(16.0)
+                                                .strong()
+                                        ));
+                                        ui.add(egui::Label::new(
+                                            egui::RichText::new(artists)
+                                                .size(14.0)
+                                                .color(egui::Color32::LIGHT_GRAY)
+                                        ));
+                                    });
+                                    ui.add_space(4.0);
+                                    ui.separator();
+                                    ui.add_space(4.0);
+                                }
+                                
                                 if is_loading {
                                     ui.horizontal(|ui| {
                                         ui.spinner();
-                                        ui.label("Loading tracks...");
+                                        ui.label("Loading more tracks...");
                                     });
-                                } else {
-                                    for (track, artists) in &tracks {
-                                        ui.vertical(|ui| {
-                                            ui.add(egui::Label::new(
-                                                egui::RichText::new(track)
-                                                    .size(16.0)
-                                                    .strong()
-                                            ));
-                                            ui.add(egui::Label::new(
-                                                egui::RichText::new(artists)
-                                                    .size(14.0)
-                                                    .color(egui::Color32::LIGHT_GRAY)
-                                            ));
-                                        });
-                                        ui.add_space(4.0);
-                                        ui.separator();
-                                        ui.add_space(4.0);
-                                    }
                                 }
                             });
                         });
@@ -82,5 +101,10 @@ impl eframe::App for SpotifyApp {
                 }
             }
         });
+        
+        // Request repaint while loading to ensure smooth updates
+        if state.is_loading {
+            ctx.request_repaint();
+        }
     }
 }

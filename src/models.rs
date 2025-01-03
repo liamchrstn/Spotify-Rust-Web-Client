@@ -19,6 +19,8 @@ pub struct Artist {
 #[derive(Deserialize)]
 pub struct SavedTracksResponse {
     pub items: Vec<SavedTrack>,
+    pub total: i32,
+    pub offset: i32,
 }
 
 #[derive(Deserialize)]

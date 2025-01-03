@@ -26,3 +26,4 @@ console_error_panic_hook = "0.1.7"
 getrandom = { version = "0.2.10", features = ["js"] }
 js-sys = "0.3"
 futures = "0.3"
+gloo-timers = { version = "0.2", features = ["futures"] }
