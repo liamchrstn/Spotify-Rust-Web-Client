@@ -1,0 +1,5 @@
+uses egui to host as web 
+written in rust
+
+auth into spotifiy with login
+present user with their username as welcome screen 
