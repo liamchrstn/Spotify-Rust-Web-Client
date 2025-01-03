@@ -4,13 +4,24 @@ use wasm_bindgen_futures::spawn_local;
 use web_sys::window;
 use crate::loginWithSpotify;
 use crate::token::ACCESS_TOKEN;
+use egui_theme_switch::global_theme_switch;
 
 #[derive(Default)]
-pub struct SpotifyApp;
+pub struct SpotifyApp {
+}
 
 impl eframe::App for SpotifyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let mut state = APP_STATE.lock().unwrap();
+        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                ui.heading("Spotify App");
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    global_theme_switch(ui);  // Remove extra semicolon
+                });
+            });
+        });
+
         egui::CentralPanel::default().show(ctx, |ui| {
             if let Some(name) = &state.username {
                 ui.heading(format!("Welcome, {}", name));

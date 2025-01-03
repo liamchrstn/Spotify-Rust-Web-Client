@@ -13,17 +13,18 @@ name = "spotify-egui"
 path = "src/main.rs"
 
 [dependencies]
-egui = "0.23.0"
-eframe = { version = "0.23.0", default-features = false, features = ["default_fonts", "glow"] }
-wasm-bindgen = "0.2.87"
-wasm-bindgen-futures = "0.4.37"
-web-sys = { version = "0.3", features = ["Window", "Storage"] }
-reqwest = { version = "0.11.20", features = ["json"] }
-serde = { version = "1.0.188", features = ["derive"] }
-serde_json = "1.0.107"
-once_cell = "1.18.0"
+egui = "0.30.0"
+eframe = { version = "0.30.0", default-features = false, features = ["default_fonts", "glow"] }
+wasm-bindgen = "0.2.99"
+wasm-bindgen-futures = "0.4.49"
+web-sys = { version = "0.3.76", features = ["Window", "Storage"] }
+reqwest = { version = "0.12.12", features = ["json"] }
+serde = { version = "1.0.217", features = ["derive"] }
+serde_json = "1.0.134"
+once_cell = "1.20.2"
 console_error_panic_hook = "0.1.7"
-getrandom = { version = "0.2.10", features = ["js"] }
-js-sys = "0.3"
-futures = "0.3"
-gloo-timers = { version = "0.2", features = ["futures"] }
+getrandom = { version = "0.2.15", features = ["js"] }
+js-sys = "0.3.76"
+futures = "0.3.31"
+gloo-timers = { version = "0.3.0", features = ["futures"] }
+egui-theme-switch = "0.2.3"

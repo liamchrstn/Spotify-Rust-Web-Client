@@ -2,7 +2,6 @@ use crate::models::{UserProfile, SavedTracksResponse};
 use crate::utils::{log_error, clear_token_and_redirect};
 use crate::app_state::{APP_STATE, set_username};
 use reqwest::Client;
-use std::time::Duration;
 
 pub async fn fetch_user_profile(token: String) {
     let client = Client::new();
