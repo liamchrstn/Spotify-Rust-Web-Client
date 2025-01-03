@@ -1,0 +1,15 @@
+{
+  "name": "spotify-egui",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "spotify_egui_bg.wasm",
+    "spotify_egui.js",
+    "spotify_egui.d.ts"
+  ],
+  "main": "spotify_egui.js",
+  "types": "spotify_egui.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

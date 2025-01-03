@@ -1,0 +1,60 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Egui</title>
+    <link rel="icon" href="favicon.png" type="image/png">
+    <style>
+        body { margin: 0; }
+        canvas { width: 100vw; height: 100vh; }
+    </style>
+    <script type="module" src="spotify_egui.js"></script>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script type="module">
+        import init, { start, set_access_token } from './spotify_egui.js';
+
+        window.loginWithSpotify = function() {
+            const clientId = '75a6782d877a45d9adf93299e1663ad9';
+            const redirectUri = 'http://localhost:8000';
+            const scope = 'user-read-email user-library-read'; // Ensure user-library-read scope is included
+            const url = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${redirectUri}&scope=${scope}`;
+            window.location.href = url;
+        };
+
+        function getAccessToken() {
+            const storedToken = localStorage.getItem('spotify_token');
+            if (storedToken) {
+                return storedToken;
+            }
+
+            const hash = window.location.hash.substring(1);
+            const params = hash.split('&').reduce((acc, param) => {
+                const [key, value] = param.split('=');
+                acc[key] = value;
+                return acc;
+            }, {});
+
+            if (params.access_token) {
+                localStorage.setItem('spotify_token', params.access_token);
+                window.location.hash = '';
+                return params.access_token;
+            }
+
+            return null;
+        }
+
+        async function run() {
+            await init();
+            await start();
+            const accessToken = getAccessToken();
+            if (accessToken) {
+                set_access_token(accessToken);
+            }
+        }
+
+        run();
+    </script>
+</body>
+</html>
