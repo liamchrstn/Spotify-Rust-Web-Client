@@ -16,6 +16,7 @@ pub struct AppState {
     pub total_tracks: Option<i32>,
     pub is_loading: bool,  // Add loading state
     pub view_mode: ViewMode,
+    pub search_text: String,
 }
 
 impl Default for AppState {
@@ -29,6 +30,7 @@ impl Default for AppState {
             total_tracks: None,
             is_loading: false,  // Initialize loading state
             view_mode: ViewMode::Grid,  // Changed from List to Grid
+            search_text: String::new(),
         }
     }
 }

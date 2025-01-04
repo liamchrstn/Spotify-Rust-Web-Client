@@ -54,23 +54,49 @@ pub fn show_saved_tracks_window(ctx: &Context) {
             }
 
             ui.horizontal(|ui| {
-                ui.label("View:");
-                if ui.toggle_value(&mut (view_mode == ViewMode::Grid), &format!("{} Grid", egui_phosphor::bold::SQUARES_FOUR)).clicked() {
-                    window_size = (800.0, 600.0);
-                    state.view_mode = ViewMode::Grid;
-                }
-                ui.add_space(8.0);
-                if ui.toggle_value(&mut (view_mode == ViewMode::List), &format!("{} List", egui_phosphor::bold::LIST)).clicked() {
-                    state.view_mode = ViewMode::List;
-                    window_size = (400.0, 600.0);
-                }
+                // Search on the left
+                ui.horizontal(|ui| {
+                    ui.label(format!("{} Search:", egui_phosphor::bold::MAGNIFYING_GLASS));
+                    // Calculate desired width based on text content, with minimum width
+                    let desired_width = (state.search_text.len() as f32 * 8.0).max(100.0);
+                    let search_response = ui.add(
+                        egui::TextEdit::singleline(&mut state.search_text)
+                            .desired_width(desired_width)
+                    );
+                    if search_response.changed() {
+                        // Search text updated, no need to do anything as we'll filter below
+                    }
+                });
+
+                // Push view controls to the right
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.toggle_value(&mut (view_mode == ViewMode::List), &format!("{} List", egui_phosphor::bold::LIST)).clicked() {
+                        state.view_mode = ViewMode::List;
+                        window_size = (400.0, 600.0);
+                    }
+                    ui.add_space(8.0);
+                    if ui.toggle_value(&mut (view_mode == ViewMode::Grid), &format!("{} Grid", egui_phosphor::bold::SQUARES_FOUR)).clicked() {
+                        window_size = (800.0, 600.0);
+                        state.view_mode = ViewMode::Grid;
+                    }
+                    ui.label("View:");
+                });
             });
             ui.add_space(8.0);
 
+            // Filter tracks based on search text
+            let filtered_tracks: Vec<_> = tracks.iter()
+                .filter(|(track, artists, _)| {
+                    let search_lower = state.search_text.to_lowercase();
+                    track.to_lowercase().contains(&search_lower) || 
+                    artists.to_lowercase().contains(&search_lower)
+                })
+                .collect();
+
             egui::ScrollArea::vertical().show(ui, |ui| {
                 match view_mode {
-                    ViewMode::List => show_list_view(ui, &tracks),
-                    ViewMode::Grid => show_grid_view(ui, &tracks),
+                    ViewMode::List => show_list_view(ui, &filtered_tracks),
+                    ViewMode::Grid => show_grid_view(ui, &filtered_tracks),
                 }
             });
         });
@@ -78,7 +104,7 @@ pub fn show_saved_tracks_window(ctx: &Context) {
     state.tracks_window_open = tracks_window_open;
 }
 
-fn show_list_view(ui: &mut Ui, tracks: &[(String, String, String)]) {
+fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String)]) {
     for (track, artists, image_url) in tracks {
         ui.horizontal(|ui| {
             // Add album art
@@ -107,7 +133,7 @@ fn show_list_view(ui: &mut Ui, tracks: &[(String, String, String)]) {
     }
 }
 
-fn show_grid_view(ui: &mut Ui, tracks: &[(String, String, String)]) {
+fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String)]) {
     let available_width = ui.available_width();
     let column_width = (available_width / 3.0).max(100.0) - 10.0; // Add padding
     
