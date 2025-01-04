@@ -113,26 +113,27 @@ impl eframe::App for SpotifyApp {
                                             .striped(true)
                                             .show(ui, |ui| {
                                                 for (i, (track, artists)) in tracks.iter().enumerate() {
-                                                    ui.with_layout(
-                                                        egui::Layout::top_down_justified(egui::Align::Center)
-                                                            .with_cross_justify(true),
-                                                        |ui| {
-                                                            ui.set_min_width(column_width);
-                                                            ui.set_max_width(column_width);
-                                                            
-                                                            ui.add(egui::Label::new(
-                                                                egui::RichText::new(track)
-                                                                    .size(16.0)
-                                                                    .strong()
-                                                            ).wrap());
-                                                            
-                                                            ui.add(egui::Label::new(
-                                                                egui::RichText::new(artists)
-                                                                    .size(14.0)
-                                                                    .color(egui::Color32::LIGHT_GRAY)
-                                                            ).wrap());
-                                                        }
-                                                    );
+                                                    ui.vertical(|ui| {
+                                                        ui.set_min_width(column_width);
+                                                        ui.set_max_width(column_width);
+                                                        
+                                                        ui.add(egui::Label::new(
+                                                            egui::RichText::new(track)
+                                                                .size(16.0)
+                                                                .strong()
+                                                        ).wrap());
+                                                        
+                                                        ui.add(egui::Label::new(
+                                                            egui::RichText::new(artists)
+                                                                .size(14.0)
+                                                                .color(egui::Color32::LIGHT_GRAY)
+                                                        ).wrap());
+                                                    });
+                                                    
+                                                    // Add separator after first and second columns
+                                                    if i % 3 != 2 {
+                                                        ui.separator_vertical();
+                                                    }
                                                     
                                                     if i % 3 == 2 {
                                                         ui.end_row();
