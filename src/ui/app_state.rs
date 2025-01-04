@@ -25,10 +25,10 @@ impl Default for AppState {
             saved_tracks: Vec::new(),
             show_tracks: false,
             tracks_window_open: false,
-            tracks_window_size: (400.0, 600.0), // Increased window size
+            tracks_window_size: (800.0, 600.0), // Increased window size
             total_tracks: None,
             is_loading: false,  // Initialize loading state
-            view_mode: ViewMode::List,
+            view_mode: ViewMode::Grid,  // Changed from List to Grid
         }
     }
 }

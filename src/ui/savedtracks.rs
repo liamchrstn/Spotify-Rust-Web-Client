@@ -23,10 +23,10 @@ pub fn show_saved_tracks_window(ctx: &Context) {
     }
 
     let tracks = state.saved_tracks.clone();
-    let window_size = state.tracks_window_size;
     let is_loading = state.is_loading;
     let total_tracks = state.total_tracks;
     let mut view_mode = state.view_mode;
+    let mut window_size = state.tracks_window_size;
     let mut tracks_window_open = state.tracks_window_open;
     
     egui::Window::new("Saved Tracks")
@@ -56,11 +56,11 @@ pub fn show_saved_tracks_window(ctx: &Context) {
             ui.horizontal(|ui| {
                 ui.label("View:");
                 if ui.radio_value(&mut view_mode, ViewMode::List, "List").clicked() {
-                    state.tracks_window_size = (400.0, 600.0);
                     state.view_mode = ViewMode::List;
+                    window_size = (400.0, 600.0);
                 }
                 if ui.radio_value(&mut view_mode, ViewMode::Grid, "Grid").clicked() {
-                    state.tracks_window_size = (800.0, 600.0);
+                    window_size = (800.0, 600.0);
                     state.view_mode = ViewMode::Grid;
                 }
             });
