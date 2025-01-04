@@ -125,11 +125,15 @@ fn show_grid_view(ui: &mut Ui, tracks: &[(String, String, String)]) {
                     body.row(100.0, |mut row| {
                         for col in 0..3 {
                             let idx = row_idx * 3 + col;
-                            if let Some((track, artists, _image_url)) = tracks.get(idx) {
+                            if let Some((track, artists, image_url)) = tracks.get(idx) {
                                 row.col(|ui| {
                                     draw_vlines(ui, 100.0, col > 0, |ui| {
                                         ui.horizontal(|ui| {
-                                            ui.add_space(12.0);
+                                            // Add album art
+                                            if let Some(image) = get_or_load_image(ui.ctx(), image_url) {
+                                                ui.add(image.fit_to_exact_size([80.0, 80.0].into()));
+                                            }
+                                            ui.add_space(8.0);
                                             ui.vertical(|ui| {
                                                 ui.add(
                                                     egui::Label::new(
@@ -147,7 +151,6 @@ fn show_grid_view(ui: &mut Ui, tracks: &[(String, String, String)]) {
                                                     ).wrap()
                                                 );
                                             });
-                                            ui.add_space(12.0);
                                         });
                                     });
                                 });
