@@ -11,23 +11,35 @@ pub struct SpotifyApp {}
 
 impl eframe::App for SpotifyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Create a separate scope for the main UI elements
         {
             let mut state = APP_STATE.lock().unwrap();
             egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
                 ui.horizontal(|ui| {
-                    ui.heading("Spotify App");
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        global_theme_switch(ui);
-                    });
+                    if let Some(name) = &state.username {
+                        ui.heading(format!("Welcome, {}", name));
+                        
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            global_theme_switch(ui);
+                            if ui.button("Logout").clicked() {
+                                if let Some(window) = window() {
+                                    if let Ok(local_storage) = window.local_storage() {
+                                        if let Some(storage) = local_storage {
+                                            let _ = storage.remove_item("spotify_token");
+                                            state.username = None;
+                                            state.saved_tracks.clear();
+                                            state.show_tracks = false;
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
                 });
             });
 
             egui::CentralPanel::default().show(ctx, |ui| {
-                if let Some(name) = &state.username {
-                    ui.heading(format!("Welcome, {}", name));
-                    
-                    if ui.button("Show Saved Tracks").clicked() {
+                if let Some(name) = &state.username {                 
+                    if ui.button("View Your Liked Songs").clicked() {
                         state.show_tracks = true;
                         state.tracks_window_open = true;
                         let token = ACCESS_TOKEN.lock().unwrap().clone().unwrap();
@@ -35,23 +47,13 @@ impl eframe::App for SpotifyApp {
                             fetch_saved_tracks(token).await;
                         });
                     }
-
-                    if ui.button("Logout").clicked() {
-                        if let Some(window) = window() {
-                            if let Ok(local_storage) = window.local_storage() {
-                                if let Some(storage) = local_storage {
-                                    let _ = storage.remove_item("spotify_token");
-                                }
-                            }
-                        }
-                        state.username = None;
-                        state.saved_tracks.clear();
-                        state.show_tracks = false;
-                    }
                 } else {
-                    if ui.button("Login with Spotify").clicked() {
-                        loginWithSpotify();
-                    }
+                    ui.vertical_centered(|ui| {
+                        ui.add_space(100.0); // Add some space from the top
+                        if ui.add_sized([200.0, 50.0], egui::Button::new("Connect with Spotify")).clicked() {
+                            loginWithSpotify();
+                        }
+                    });
                 }
             });
         }

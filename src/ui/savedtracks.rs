@@ -29,7 +29,7 @@ pub fn show_saved_tracks_window(ctx: &Context) {
     let mut window_size = state.tracks_window_size;
     let mut tracks_window_open = state.tracks_window_open;
     
-    egui::Window::new("Saved Tracks")
+    egui::Window::new("Liked Songs")
         .open(&mut tracks_window_open)
         .default_size(window_size)
         .min_width(300.0)
