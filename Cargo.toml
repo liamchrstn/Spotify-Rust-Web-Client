@@ -30,3 +30,4 @@ gloo-timers = { version = "0.3.0", features = ["futures"] }
 egui-theme-switch = "0.2.3"
 egui_extras = { version = "0.30.0", features = ["all_loaders", "http", "image"] }
 image = { version = "0.25.5", features = ["jpeg", "png"] }
+egui-phosphor = { version = "0.8", features = ["thin", "light", "regular", "bold", "fill"] }

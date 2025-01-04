@@ -2,7 +2,6 @@ mod api_request;
 mod ui;
 mod utils;
 
-// Re-export loginWithSpotify for use in other modules
 #[wasm_bindgen]
 extern "C" {
     pub fn loginWithSpotify();
@@ -13,6 +12,7 @@ use web_sys::HtmlCanvasElement;
 use eframe::WebRunner;
 use console_error_panic_hook;
 use std::panic;
+
 
 #[wasm_bindgen]
 pub async fn start() -> Result<(), JsValue> {
@@ -34,8 +34,14 @@ pub async fn start() -> Result<(), JsValue> {
             canvas_element,
             web_options,
             Box::new(|cc| {
+                // Configure fonts
+                let mut fonts = egui::FontDefinitions::default();
+                egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Bold);
+                cc.egui_ctx.set_fonts(fonts);
+                
                 // Install image loaders
                 egui_extras::install_image_loaders(&cc.egui_ctx);
+                
                 Ok(Box::new(ui::SpotifyApp::default()))
             }),
         )

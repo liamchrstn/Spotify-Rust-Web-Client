@@ -55,13 +55,14 @@ pub fn show_saved_tracks_window(ctx: &Context) {
 
             ui.horizontal(|ui| {
                 ui.label("View:");
-                if ui.radio_value(&mut view_mode, ViewMode::List, "List").clicked() {
-                    state.view_mode = ViewMode::List;
-                    window_size = (400.0, 600.0);
-                }
-                if ui.radio_value(&mut view_mode, ViewMode::Grid, "Grid").clicked() {
+                if ui.toggle_value(&mut (view_mode == ViewMode::Grid), &format!("{} Grid", egui_phosphor::bold::SQUARES_FOUR)).clicked() {
                     window_size = (800.0, 600.0);
                     state.view_mode = ViewMode::Grid;
+                }
+                ui.add_space(8.0);
+                if ui.toggle_value(&mut (view_mode == ViewMode::List), &format!("{} List", egui_phosphor::bold::LIST)).clicked() {
+                    state.view_mode = ViewMode::List;
+                    window_size = (400.0, 600.0);
                 }
             });
             ui.add_space(8.0);
