@@ -28,3 +28,4 @@ js-sys = "0.3.76"
 futures = "0.3.31"
 gloo-timers = { version = "0.3.0", features = ["futures"] }
 egui-theme-switch = "0.2.3"
+egui_extras = "0.30.0"

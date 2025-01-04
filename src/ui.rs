@@ -5,6 +5,22 @@ use web_sys::window;
 use crate::loginWithSpotify;
 use crate::token::ACCESS_TOKEN;
 use egui_theme_switch::global_theme_switch;
+use egui_extras::{TableBuilder, Column};
+use egui::{Rgba, Stroke as PathStroke, Ui};
+
+fn draw_vlines<R>(ui: &mut Ui, height: f32, draw_left: bool, next: impl FnOnce(&mut Ui) -> R) {
+    let stroke = ui.visuals().widgets.noninteractive.bg_stroke;
+    let rect = ui.available_rect_before_wrap();
+    next(ui);
+    // Only draw left line if requested (for middle columns)
+    if draw_left {
+        ui.painter().vline(
+            rect.left(),
+            rect.top()..=rect.bottom(),
+            stroke
+        );
+    }
+}
 
 #[derive(Default)]
 pub struct SpotifyApp {
@@ -47,6 +63,7 @@ impl eframe::App for SpotifyApp {
                     egui::Window::new("Saved Tracks")
                         .open(&mut tracks_window_open)
                         .default_size(window_size)
+                        .min_width(300.0)          // Add minimum width
                         .resizable(true)
                         .show(ctx, |ui| {
                             if is_loading {
@@ -74,7 +91,7 @@ impl eframe::App for SpotifyApp {
                                     state.view_mode = ViewMode::List;
                                 }
                                 if ui.radio_value(&mut view_mode, ViewMode::Grid, "Grid").clicked() {
-                                    state.tracks_window_size = (1000.0, 600.0);  // Wider window for 3 columns
+                                    state.tracks_window_size = (800.0, 600.0);  // Reduced from 1000.0 to 800.0 for default grid width
                                     state.view_mode = ViewMode::Grid;
                                 }
                             });
@@ -104,46 +121,58 @@ impl eframe::App for SpotifyApp {
                                     }
                                     ViewMode::Grid => {
                                         let available_width = ui.available_width();
-                                        let column_width = (available_width - 40.0) / 3.0; // 40.0 accounts for spacing
+                                        let column_width = (available_width / 3.0).max(100.0);
                                         
-                                        egui::Grid::new("tracks_grid")
-                                            .num_columns(3)
-                                            .spacing([20.0, 20.0])
-                                            .min_col_width(column_width)
-                                            .striped(true)
-                                            .show(ui, |ui| {
-                                                for (i, (track, artists)) in tracks.iter().enumerate() {
-                                                    ui.vertical(|ui| {
-                                                        ui.set_min_width(column_width);
-                                                        ui.set_max_width(column_width);
-                                                        
-                                                        ui.add(egui::Label::new(
-                                                            egui::RichText::new(track)
-                                                                .size(16.0)
-                                                                .strong()
-                                                        ).wrap());
-                                                        
-                                                        ui.add(egui::Label::new(
-                                                            egui::RichText::new(artists)
-                                                                .size(14.0)
-                                                                .color(egui::Color32::LIGHT_GRAY)
-                                                        ).wrap());
-                                                    });
-                                                    
-                                                    // Add separator after first and second columns
-                                                    if i % 3 != 2 {
-                                                        ui.separator_vertical();
+                                        egui::ScrollArea::horizontal().show(ui, |ui| {
+                                            TableBuilder::new(ui)
+                                                .striped(true)
+                                                .resizable(false)
+                                                .cell_layout(egui::Layout::top_down_justified(egui::Align::Center))
+                                                .column(Column::exact(column_width))
+                                                .column(Column::exact(column_width))
+                                                .column(Column::exact(column_width))
+                                                .vscroll(true)
+                                                .body(|mut body| {
+                                                    let rows = (tracks.len() + 2) / 3;
+                                                    for row_idx in 0..rows {
+                                                        body.row(100.0, |mut row| {
+                                                            for col in 0..3 {
+                                                                let idx = row_idx * 3 + col;
+                                                                if let Some((track, artists)) = tracks.get(idx) {
+                                                                    row.col(|ui| {
+                                                                        draw_vlines(ui, 100.0, col > 0, |ui| {
+                                                                            ui.horizontal(|ui| {
+                                                                                ui.add_space(12.0); // Left padding from divider
+                                                                                ui.vertical(|ui| {
+                                                                                    ui.add(
+                                                                                        egui::Label::new(
+                                                                                            egui::RichText::new(track)
+                                                                                                .size(16.0)
+                                                                                                .strong()
+                                                                                        ).wrap()
+                                                                                    );
+                                                                                    ui.add(
+                                                                                        egui::Label::new(
+                                                                                            egui::RichText::new(artists)
+                                                                                                .size(14.0)
+                                                                                                .color(egui::Color32::LIGHT_GRAY)
+                                                                                        ).wrap()
+                                                                                    );
+                                                                                });
+                                                                                ui.add_space(12.0); // Right padding before next divider
+                                                                            });
+                                                                        });
+                                                                    });
+                                                                } else {
+                                                                    row.col(|ui| {
+                                                                        draw_vlines(ui, 100.0, col > 0, |_| {});
+                                                                    });
+                                                                }
+                                                            }
+                                                        });
                                                     }
-                                                    
-                                                    if i % 3 == 2 {
-                                                        ui.end_row();
-                                                    }
-                                                }
-                                                
-                                                if tracks.len() % 3 != 0 {
-                                                    ui.end_row();
-                                                }
-                                            });
+                                                });
+                                        });
                                     }
                                 }
                                 
