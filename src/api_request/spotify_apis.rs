@@ -1,6 +1,7 @@
 use super::models::{UserProfile, SavedTracksResponse};  // Changed from crate::models
 use crate::utils::{log_error, clear_token_and_redirect};
 use crate::ui::{APP_STATE, set_username};  // Changed from crate::app_state
+use crate::storage::{load_tracks, save_tracks};
 use reqwest::Client;
 
 pub async fn fetch_user_profile(token: String) {
@@ -37,10 +38,18 @@ pub async fn fetch_user_profile(token: String) {
 }
 
 pub async fn fetch_saved_tracks(token: String) {
-    {
+    let mut state = APP_STATE.lock().unwrap();
+    state.is_loading = true;
+    state.show_tracks = true;  // Show window immediately
+    drop(state); // Release lock before async operations
+
+    // Try to load from storage first
+    if let Some(stored_tracks) = load_tracks() {
         let mut state = APP_STATE.lock().unwrap();
-        state.is_loading = true;
-        state.show_tracks = true;  // Show window immediately
+        state.saved_tracks = stored_tracks.tracks;
+        state.total_tracks = Some(stored_tracks.total);
+        state.is_loading = false;
+        return;
     }
 
     let client = reqwest::Client::new();
@@ -88,13 +97,20 @@ pub async fn fetch_saved_tracks(token: String) {
                                     })
                                     .collect();
                                 
-                                let mut state = APP_STATE.lock().unwrap();
-                                state.total_tracks = Some(tracks.total);
-                                state.saved_tracks.extend(track_info);
-                                
-                                if offset + limit >= tracks.total as usize {
-                                    state.is_loading = false;
-                                    break;
+                                let total = tracks.total;
+                                {
+                                    let mut state = APP_STATE.lock().unwrap();
+                                    state.total_tracks = Some(total);
+                                    state.saved_tracks.extend(track_info);
+                                    
+                                    if offset + limit >= total as usize {
+                                        // Save to storage when all tracks are fetched
+                                        if let Err(e) = save_tracks(&state.saved_tracks, total) {
+                                            log_error(&format!("Failed to save tracks to storage: {}", e));
+                                        }
+                                        state.is_loading = false;
+                                        break;
+                                    }
                                 }
                                 offset += limit;
                             }

@@ -1,6 +1,7 @@
 mod api_request;
 mod ui;
 mod utils;
+mod storage;
 
 #[wasm_bindgen]
 extern "C" {
