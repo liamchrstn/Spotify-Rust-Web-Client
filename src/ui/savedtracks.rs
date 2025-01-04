@@ -17,7 +17,7 @@ fn draw_vlines<R>(ui: &mut Ui, _height: f32, draw_left: bool, next: impl FnOnce(
 
 pub fn show_saved_tracks_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
-    if !state.show_tracks {
+    if (!state.show_tracks) {
         return;
     }
 
@@ -70,13 +70,6 @@ pub fn show_saved_tracks_window(ctx: &Context) {
                     ViewMode::List => show_list_view(ui, &tracks),
                     ViewMode::Grid => show_grid_view(ui, &tracks),
                 }
-                
-                if is_loading {
-                    ui.horizontal(|ui| {
-                        ui.spinner();
-                        ui.label("Loading more tracks...");
-                    });
-                }
             });
         });
         
@@ -107,7 +100,7 @@ fn show_list_view(ui: &mut Ui, tracks: &[(String, String)]) {
 
 fn show_grid_view(ui: &mut Ui, tracks: &[(String, String)]) {
     let available_width = ui.available_width();
-    let column_width = (available_width / 3.0).max(100.0);
+    let column_width = (available_width / 3.0).max(100.0) - 10.0; // Add padding
     
     egui::ScrollArea::horizontal().show(ui, |ui| {
         TableBuilder::new(ui)
