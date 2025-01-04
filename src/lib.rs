@@ -18,7 +18,7 @@ use std::panic;
 pub async fn start() -> Result<(), JsValue> {
     console_error_panic_hook::set_once();
     panic::set_hook(Box::new(console_error_panic_hook::hook));
-
+    
     let canvas_element = web_sys::window()
         .unwrap()
         .document()
@@ -33,7 +33,11 @@ pub async fn start() -> Result<(), JsValue> {
         .start(
             canvas_element,
             web_options,
-            Box::new(|_cc| Ok(Box::new(ui::SpotifyApp::default()))),
+            Box::new(|cc| {
+                // Install image loaders
+                egui_extras::install_image_loaders(&cc.egui_ctx);
+                Ok(Box::new(ui::SpotifyApp::default()))
+            }),
         )
         .await
 }

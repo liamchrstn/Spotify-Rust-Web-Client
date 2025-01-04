@@ -1,6 +1,7 @@
 use super::app_state::{ViewMode, APP_STATE};  // Changed from crate::app_state
 use egui::{Context, Ui};
 use egui_extras::{TableBuilder, Column};
+use crate::api_request::imagerender::get_or_load_image;
 
 fn draw_vlines<R>(ui: &mut Ui, _height: f32, draw_left: bool, next: impl FnOnce(&mut Ui) -> R) {
     let stroke = ui.visuals().widgets.noninteractive.bg_stroke;
@@ -76,21 +77,28 @@ pub fn show_saved_tracks_window(ctx: &Context) {
     state.tracks_window_open = tracks_window_open;
 }
 
-fn show_list_view(ui: &mut Ui, tracks: &[(String, String)]) {
-    for (track, artists) in tracks {
-        ui.vertical(|ui| {
-            ui.add(egui::Label::new(
-                egui::RichText::new(track)
-                    .size(16.0)
-                    .strong()
-                    .color(ui.visuals().strong_text_color())
-            ).wrap());
+fn show_list_view(ui: &mut Ui, tracks: &[(String, String, String)]) {
+    for (track, artists, image_url) in tracks {
+        ui.horizontal(|ui| {
+            // Add album art
+            if let Some(image) = get_or_load_image(ui.ctx(), image_url) {
+                ui.add(image.fit_to_exact_size([40.0, 40.0].into()));
+            }
             
-            ui.add(egui::Label::new(
-                egui::RichText::new(artists)
-                    .size(14.0)
-                    .color(ui.visuals().weak_text_color())
-            ).wrap());
+            ui.vertical(|ui| {
+                ui.add(egui::Label::new(
+                    egui::RichText::new(track)
+                        .size(16.0)
+                        .strong()
+                        .color(ui.visuals().strong_text_color())
+                ).wrap());
+                
+                ui.add(egui::Label::new(
+                    egui::RichText::new(artists)
+                        .size(14.0)
+                        .color(ui.visuals().weak_text_color())
+                ).wrap());
+            });
         });
         ui.add_space(4.0);
         ui.separator();
@@ -98,7 +106,7 @@ fn show_list_view(ui: &mut Ui, tracks: &[(String, String)]) {
     }
 }
 
-fn show_grid_view(ui: &mut Ui, tracks: &[(String, String)]) {
+fn show_grid_view(ui: &mut Ui, tracks: &[(String, String, String)]) {
     let available_width = ui.available_width();
     let column_width = (available_width / 3.0).max(100.0) - 10.0; // Add padding
     
@@ -117,7 +125,7 @@ fn show_grid_view(ui: &mut Ui, tracks: &[(String, String)]) {
                     body.row(100.0, |mut row| {
                         for col in 0..3 {
                             let idx = row_idx * 3 + col;
-                            if let Some((track, artists)) = tracks.get(idx) {
+                            if let Some((track, artists, _image_url)) = tracks.get(idx) {
                                 row.col(|ui| {
                                     draw_vlines(ui, 100.0, col > 0, |ui| {
                                         ui.horizontal(|ui| {

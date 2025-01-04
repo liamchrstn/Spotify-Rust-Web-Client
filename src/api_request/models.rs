@@ -9,6 +9,19 @@ pub struct SavedTrack {
 pub struct Track {
     pub name: String,
     pub artists: Vec<Artist>,
+    pub album: Album,
+}
+
+#[derive(Deserialize)]
+pub struct Album {
+    pub images: Vec<Image>,
+}
+
+#[derive(Deserialize)]
+pub struct Image {
+    pub url: String,
+    pub width: Option<i32>,
+    pub height: Option<i32>,
 }
 
 #[derive(Deserialize)]

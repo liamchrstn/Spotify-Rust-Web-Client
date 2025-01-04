@@ -68,7 +68,7 @@ pub async fn fetch_saved_tracks(token: String) {
                     200 => {
                         match response.json::<SavedTracksResponse>().await {
                             Ok(tracks) => {
-                                let track_info: Vec<(String, String)> = tracks.items
+                                let track_info: Vec<(String, String, String)> = tracks.items
                                     .into_iter()
                                     .map(|item| {
                                         let artists = item.track.artists
@@ -76,7 +76,15 @@ pub async fn fetch_saved_tracks(token: String) {
                                             .map(|artist| artist.name.clone())
                                             .collect::<Vec<_>>()
                                             .join(", ");
-                                        (item.track.name, artists)
+                                        
+                                        // Get smallest image for list view
+                                        let image_url = item.track.album.images
+                                            .iter()
+                                            .min_by_key(|img| img.width.unwrap_or(i32::MAX))
+                                            .map(|img| img.url.clone())
+                                            .unwrap_or_default();
+
+                                        (item.track.name, artists, image_url)
                                     })
                                     .collect();
                                 
@@ -121,4 +129,3 @@ pub async fn fetch_saved_tracks(token: String) {
         }
     }
 }
-
