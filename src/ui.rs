@@ -106,12 +106,13 @@ impl eframe::App for SpotifyApp {
                                                     egui::RichText::new(track)
                                                         .size(16.0)
                                                         .strong()
+                                                        .color(ui.visuals().strong_text_color())
                                                 ).wrap());
                                                 
                                                 ui.add(egui::Label::new(
                                                     egui::RichText::new(artists)
                                                         .size(14.0)
-                                                        .color(egui::Color32::LIGHT_GRAY)
+                                                        .color(ui.visuals().weak_text_color())
                                                 ).wrap());
                                             });
                                             ui.add_space(4.0);
@@ -144,18 +145,21 @@ impl eframe::App for SpotifyApp {
                                                                             ui.horizontal(|ui| {
                                                                                 ui.add_space(12.0); // Left padding from divider
                                                                                 ui.vertical(|ui| {
+                                                                                    // Track name - using strong text color
                                                                                     ui.add(
                                                                                         egui::Label::new(
                                                                                             egui::RichText::new(track)
                                                                                                 .size(16.0)
                                                                                                 .strong()
+                                                                                                .color(ui.visuals().strong_text_color())
                                                                                         ).wrap()
                                                                                     );
+                                                                                    // Artist name - using weak text color
                                                                                     ui.add(
                                                                                         egui::Label::new(
                                                                                             egui::RichText::new(artists)
                                                                                                 .size(14.0)
-                                                                                                .color(egui::Color32::LIGHT_GRAY)
+                                                                                                .color(ui.visuals().weak_text_color())
                                                                                         ).wrap()
                                                                                     );
                                                                                 });
