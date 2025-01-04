@@ -220,20 +220,20 @@ function debugString(val) {
     return className;
 }
 /**
- * @returns {Promise<void>}
- */
-export function start() {
-    const ret = wasm.start();
-    return takeObject(ret);
-}
-
-/**
  * @param {string} token
  */
 export function set_access_token(token) {
     const ptr0 = passStringToWasm0(token, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     wasm.set_access_token(ptr0, len0);
+}
+
+/**
+ * @returns {Promise<void>}
+ */
+export function start() {
+    const ret = wasm.start();
+    return takeObject(ret);
 }
 
 function __wbg_adapter_30(arg0, arg1) {

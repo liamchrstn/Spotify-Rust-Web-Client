@@ -17,7 +17,7 @@ fn draw_vlines<R>(ui: &mut Ui, _height: f32, draw_left: bool, next: impl FnOnce(
 
 pub fn show_saved_tracks_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
-    if (!state.show_tracks) {
+    if !state.show_tracks {
         return;
     }
 
