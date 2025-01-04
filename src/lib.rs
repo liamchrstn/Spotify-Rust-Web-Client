@@ -1,20 +1,18 @@
-mod app_state;
-mod spotify_apis;
-mod token;
+mod api_request;
 mod ui;
 mod utils;
-mod models;
+
+// Re-export loginWithSpotify for use in other modules
+#[wasm_bindgen]
+extern "C" {
+    pub fn loginWithSpotify();
+}
 
 use eframe::wasm_bindgen::{self, prelude::*};
 use web_sys::HtmlCanvasElement;
 use eframe::WebRunner;
 use console_error_panic_hook;
 use std::panic;
-
-#[wasm_bindgen]
-extern "C" {
-    fn loginWithSpotify();
-}
 
 #[wasm_bindgen]
 pub async fn start() -> Result<(), JsValue> {
