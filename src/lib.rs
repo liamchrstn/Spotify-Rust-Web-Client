@@ -2,6 +2,7 @@ mod api_request;
 mod ui;
 mod utils;
 mod storage;
+mod mediaplayer;
 
 #[wasm_bindgen]
 extern "C" {

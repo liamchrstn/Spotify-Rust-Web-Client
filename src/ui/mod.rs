@@ -1,4 +1,4 @@
-mod app_state;
+pub mod app_state;
 mod savedtracks;
 mod ui;
 

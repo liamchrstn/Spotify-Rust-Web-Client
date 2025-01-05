@@ -7,7 +7,9 @@ use egui_theme_switch::global_theme_switch;
 use super::savedtracks::show_saved_tracks_window;
 
 #[derive(Default)]
-pub struct SpotifyApp {}
+pub struct SpotifyApp {
+    pub show_player: bool, // new field
+}
 
 impl eframe::App for SpotifyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
@@ -47,6 +49,11 @@ impl eframe::App for SpotifyApp {
                             fetch_saved_tracks(token).await;
                         });
                     }
+                    
+                    if ui.button("Show Player").clicked() { // new button
+                        self.show_player = true;
+                        state.player_window_open = true;
+                    }
                 } else {
                     ui.vertical_centered(|ui| {
                         ui.add_space(100.0); // Add some space from the top
@@ -69,6 +76,11 @@ impl eframe::App for SpotifyApp {
         
         if is_loading {
             ctx.request_repaint();
+        }
+
+        if self.show_player {
+            // call the media player widget here
+            super::super::mediaplayer::mediaplayerwidget::show_mediaplayer_window(ctx);
         }
     }
 }
