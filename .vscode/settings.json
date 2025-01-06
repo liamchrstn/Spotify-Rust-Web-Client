@@ -1,0 +1,12 @@
+// Workspace settings
+{
+    
+    "files.exclude": {
+        "**/*.d.ts": true,
+        "**/*.lock": true,
+        "**/target/": true
+
+    }
+
+
+}
