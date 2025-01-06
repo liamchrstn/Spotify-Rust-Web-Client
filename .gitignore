@@ -1,0 +1,23 @@
+# Ignore all files by default
+*
+
+# Allow JavaScript and CSS files in the pkg directory
+!pkg/*.js
+!pkg/*.css
+
+# Allow Rust files
+!src/**/*.rs
+!src/*.rs
+!*.rs
+
+# Allow other necessary files
+!.gitignore
+!Cargo.toml
+!Cargo.lock
+!pkg/index.html
+!pkg/package.json
+
+# Ignore specific build artifacts
+target/
+*.wasm
+*.d.ts
