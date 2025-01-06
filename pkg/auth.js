@@ -1,7 +1,7 @@
 export function loginWithSpotify() {
     const clientId = '75a6782d877a45d9adf93299e1663ad9';
     const redirectUri = 'http://localhost:8000';
-    const scope = 'user-read-email user-library-read'; // Ensure user-library-read scope is included
+    const scope = 'user-read-email user-library-read streaming user-read-playback-state user-modify-playback-state'; // Added playback scopes
     const url = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${redirectUri}&scope=${scope}`;
     window.location.href = url;
 }

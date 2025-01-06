@@ -5,6 +5,7 @@ use std::sync::Mutex;
 use super::spotify_apis::fetch_user_profile;
 
 pub static ACCESS_TOKEN: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
+pub static SDK_STATUS: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
 
 #[wasm_bindgen]
 pub fn set_access_token(token: String) {
@@ -13,4 +14,10 @@ pub fn set_access_token(token: String) {
     spawn_local(async move {
         fetch_user_profile(token).await;
     });
+}
+
+#[wasm_bindgen]
+pub fn set_sdk_status(status: String) {
+    let mut sdk_status = SDK_STATUS.lock().unwrap();
+    *sdk_status = Some(status);
 }
