@@ -2,3 +2,5 @@ target/
 *.wasm
 *.d.ts
 site/pkg/spotify_egui.js
+*.lock
+random/

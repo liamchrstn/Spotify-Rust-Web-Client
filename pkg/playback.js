@@ -1,19 +1,37 @@
-import { set_sdk_status } from './pkg/spotify_egui.js';
+import { set_sdk_status } from './spotify_egui.js';
 
 console.log('playback.js loaded'); // Added initial load log
 
-// Load the Spotify Web Playback SDK
+// Define the callback before loading the SDK
 window.onSpotifyWebPlaybackSDKReady = () => {
-    console.log('Spotify Web Playback SDK is ready'); // Log SDK readiness
+    console.log('Spotify Web Playback SDK is ready');
+    initializePlayer();
+};
+
+function initializePlayer() {
     const token = localStorage.getItem('spotify_token');
+    if (!token) {
+        console.warn('No token available for player initialization');
+        set_sdk_status('No Token');
+        return;
+    }
+
     const player = new Spotify.Player({
         name: 'Web Playback SDK Quick Start Player',
         getOAuthToken: cb => { cb(token); }
     });
 
     // Error handling
-    player.addListener('initialization_error', ({ message }) => { console.error(message); });
-    player.addListener('authentication_error', ({ message }) => { console.error(message); });
+    player.addListener('initialization_error', ({ message }) => {
+        console.error(message);
+        set_sdk_status('Init Error');
+    });
+
+    player.addListener('authentication_error', ({ message }) => {
+        console.error(message);
+        set_sdk_status('Auth Error');
+    });
+
     player.addListener('account_error', ({ message }) => { console.error(message); });
     player.addListener('playback_error', ({ message }) => { console.error(message); });
 
@@ -39,11 +57,17 @@ window.onSpotifyWebPlaybackSDKReady = () => {
         .then(success => {
             if (success) {
                 console.log('Successfully connected to Spotify Player');
+                set_sdk_status('Connected');
             } else {
                 console.log('Failed to connect to Spotify Player');
+                set_sdk_status('Connection Failed');
             }
         })
         .catch(error => {
             console.error('Error connecting to Spotify Player:', error);
+            set_sdk_status('Connection Error');
         });
-};
+}
+
+// Export for use in other modules
+export { initializePlayer };
