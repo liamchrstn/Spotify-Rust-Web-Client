@@ -1,4 +1,4 @@
-import { set_sdk_status } from './spotify_egui.js';
+import { set_sdk_status } from './pkg/spotify_egui.js';
 
 console.log('playback.js loaded'); // Added initial load log
 
