@@ -5,21 +5,24 @@
     <title>Rust Spotify</title>
     <link rel="icon" href="favicon.png" type="image/png">
     <link rel="stylesheet" href="main.css">
-    <script type="module" src="pkg/spotify_egui.js"></script>
+    
     
 </head>
 <body>
 
-    
+    <script type="module" src="spotify_egui.js"></script>
     <div class="pl">
         <div class="pl__bar"></div>
         <div class="pl__bar"></div>
         <div class="pl__bar"></div>
     </div>
     <canvas id="canvas" style="display: none;"></canvas>
-    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    
+    <!-- Load scripts in correct order -->
+    <script type="module" src="playback.js"></script>
     <script type="module" src="auth.js"></script>
     <script type="module" src="api.js"></script>
-    <script type="module" src="playback.js"></script>
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    
 </body>
 </html>
