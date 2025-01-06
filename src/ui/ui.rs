@@ -1,5 +1,5 @@
 use super::app_state::APP_STATE;  // Changed from crate::app_state
-use crate::api_request::{fetch_saved_tracks, ACCESS_TOKEN, SDK_STATUS};  // Changed imports
+use crate::api_request::{spotify_apis::fetch_saved_tracks, token::{ACCESS_TOKEN, SDK_STATUS}};
 use crate::loginWithSpotify;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::window;
@@ -62,14 +62,11 @@ impl eframe::App for SpotifyApp {
                     if let Some(status) = &*SDK_STATUS.lock().unwrap() {
                         self.sdk_status = status.clone();
                     }
-
-                    ui.horizontal(|ui| {
-                        if ui.button("Check Status").clicked() {
-                            // Log the current SDK status to the console
-                            console::log_1(&JsValue::from_str(&self.sdk_status));
-                        }
-                        ui.label(&self.sdk_status); // Display SDK status
-                    });
+                    ui.label(&self.sdk_status); // Display SDK status
+                    
+                        
+                        
+                    
                 } else {
                     ui.vertical_centered(|ui| {
                         ui.add_space(100.0); // Add some space from the top

@@ -2,6 +2,9 @@ use eframe::egui;
 use crate::mediaplayer::scrubber::ScrubBar;
 use crate::mediaplayer::scrubber::TimeManager;
 use crate::ui::app_state::APP_STATE;
+use wasm_bindgen::prelude::*;
+use js_sys;
+use web_sys::console;
 
 pub fn show_mediaplayer_window(ctx: &egui::Context) {
     let mut time_manager = TimeManager::new(100_000.0, 1.0);
@@ -46,13 +49,83 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                         egui::vec2(button_container_width, button_size.y)
                     ),
                     |ui| {
-                        scrub_bar.play_button(ui, &mut time_manager.playing, button_size);
+                        // Get current player state from JavaScript
+                        let player_state = js_sys::eval("window.player && window.player.getCurrentState()")
+                            .ok()
+                            .and_then(|val| val.as_bool());
+                        
+                        let mut is_playing = player_state.unwrap_or(false);
+                        
+                        let mut button = ui.add(egui::Button::new(if is_playing {
+                            egui::RichText::new("⏸").size(button_size.x)
+                        } else {
+                            egui::RichText::new("▶").size(button_size.x)
+                        }));
+                        
+                        // Disable button if player isn't ready
+                        if let Ok(is_ready) = js_sys::eval("window.isReady") {
+                            if is_ready.as_bool() != Some(true) {
+                                button = button.on_hover_text("Player not ready");
+                                button = button.interact(egui::Sense::hover());
+                            }
+                        }
+                        
+                        if button.clicked() {
+                            console::log_1(&"Play button clicked in Rust UI".into());
+                            // Toggle play/pause through JavaScript
+                            let result = js_sys::eval("console.log('Calling playPause'); window.playPause && window.playPause()");
+                            if let Err(err) = result {
+                                console::error_1(&format!("Error calling playPause: {:?}", err).into());
+                            }
+                            is_playing = !is_playing;
+                        }
                     }
                 );
 
-                // Add track title and artist name
-                ui.label("Track Title");
-                ui.label(egui::RichText::new("Artist Name").small());
+                // Get current track info from stored state
+                let track_info = js_sys::eval("window.currentPlayerState")
+                    .ok()
+                    .and_then(|val| {
+                        if val.is_object() {
+                            let state = js_sys::Object::from(val);
+                            if let Ok(track_window) = js_sys::Reflect::get(&state, &"track_window".into()) {
+                                if let Ok(track) = js_sys::Reflect::get(&track_window, &"current_track".into()) {
+                                    if let (Ok(name_value), Ok(artists_value)) = (
+                                        js_sys::Reflect::get(&track, &"name".into()),
+                                        js_sys::Reflect::get(&track, &"artists".into())
+                                    ) {
+                                        let title = name_value.as_string();
+                                        let artist = {
+                                            let artists_array = js_sys::Array::from(&artists_value);
+                                            if artists_array.length() > 0 {
+                                                if let Ok(artist_obj) = js_sys::Reflect::get(&artists_array.get(0), &"name".into()) {
+                                                    artist_obj.as_string()
+                                                } else {
+                                                    None
+                                                }
+                                            } else {
+                                                None
+                                            }
+                                        };
+                                        
+                                        if let (Some(title), Some(artist)) = (title, artist) {
+                                            return Some((title, artist));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        None
+                    });
+
+                // Display track info or placeholder
+                if let Some((title, artist)) = track_info {
+                    ui.label(egui::RichText::new(title).heading());
+                    ui.label(egui::RichText::new(artist).small());
+                } else {
+                    ui.label(egui::RichText::new("No track playing").heading());
+                    ui.label(egui::RichText::new("Select a track to play").small());
+                }
             });
         });
     

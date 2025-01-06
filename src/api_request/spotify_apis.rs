@@ -1,4 +1,4 @@
-use super::models::{UserProfile, SavedTracksResponse};  // Changed from crate::models
+use super::models::{UserProfile, SavedTracksResponse, StoredTracks};
 use crate::utils::{log_error, clear_token_and_redirect};
 use crate::ui::{APP_STATE, set_username};  // Changed from crate::app_state
 use crate::storage::{load_tracks, save_tracks};
