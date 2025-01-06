@@ -1,4 +1,4 @@
 target/
 *.wasm
 *.d.ts
-pkg/spotify_egui.js
+site/pkg/spotify_egui.js
