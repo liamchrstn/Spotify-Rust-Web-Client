@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 pub struct SavedTrack {
@@ -32,10 +32,17 @@ pub struct Artist {
 #[derive(Deserialize)]
 pub struct SavedTracksResponse {
     pub items: Vec<SavedTrack>,
-    pub total: i32
+    pub total: i32,
 }
 
 #[derive(Deserialize)]
 pub struct UserProfile {
     pub display_name: Option<String>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct StoredTracks {
+    pub tracks: Vec<(String, String, String)>, // (track name, artist name, image url)
+    pub total: i32,
+    pub timestamp: u64,
 }

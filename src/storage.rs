@@ -1,13 +1,6 @@
 use wasm_bindgen::JsValue;
 use web_sys::window;
-use serde::{Serialize, Deserialize};
-
-#[derive(Serialize, Deserialize)]
-pub struct StoredTracks {
-    pub tracks: Vec<(String, String, String)>, // (track name, artist name, image url)
-    pub total: i32,
-    pub timestamp: u64,
-}
+use crate::api_request::models::StoredTracks;
 
 const TRACKS_KEY: &str = "spotify_tracks";
 const CACHE_DURATION: u64 = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
