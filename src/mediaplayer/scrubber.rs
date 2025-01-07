@@ -184,24 +184,10 @@ impl TimeManager {
     }
 
     pub fn update(&mut self) {
-        if self.playing {
-            if let Some(performance) = window().and_then(|w| w.performance()) {
-                let now = performance.now();
-                let delta = now - self.last_update;
-                self.current_time += delta;
-                self.last_update = now;
-
-                // Loop back to start if we reach the end
-                if self.current_time >= self.end_time {
-                    self.current_time = 0.0;
-                    self.start_timestamp = now;
-                }
-            }
-        } else {
-            // Update last_update when paused to prevent jumps
-            if let Some(performance) = window().and_then(|w| w.performance()) {
-                self.last_update = performance.now();
-            }
+        // Update is now handled by JavaScript polling
+        // Only update internal timestamps
+        if let Some(performance) = window().and_then(|w| w.performance()) {
+            self.last_update = performance.now();
         }
     }
 }

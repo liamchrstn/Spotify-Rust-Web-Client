@@ -8,8 +8,27 @@ use js_sys;
 use web_sys::console;
 
 pub fn show_mediaplayer_window(ctx: &egui::Context) {
-    let mut time_manager = TimeManager::new(100_000.0, 1.0);
     let mut state = APP_STATE.lock().unwrap();
+
+    // Get duration from JavaScript
+    let duration = js_sys::eval("window.totalDuration || 100000.0")
+        .unwrap_or(100000.0.into())
+        .as_f64()
+        .unwrap_or(100000.0);
+
+    let mut time_manager = TimeManager::new(duration, 1.0);
+
+    // Update current time from JavaScript
+    if let Ok(current_time) = js_sys::eval("window.currentPlaybackTime || 0.0") {
+        if let Some(time) = current_time.as_f64() {
+            time_manager.current_time = time;
+        }
+    }
+
+    // Update playing state from JavaScript
+    if let Ok(is_playing) = js_sys::eval("window.isPlaying || false") {
+        time_manager.playing = is_playing.as_bool().unwrap_or(false);
+    }
 
     // Media player window
     egui::Window::new("Music Player")
