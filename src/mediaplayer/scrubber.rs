@@ -58,6 +58,10 @@ impl ScrubBar {
             let distance = (current_pos.x - start_x).clamp(0.0, total);
             let progress = (distance / total) as f64;
             *current_time = self.end_time * progress;
+
+            // Call the SDK's seek function
+            let seek_time = *current_time as i32;
+            let _ = js_sys::eval(&format!("window.spotifyPlayer.seek({seek_time})"));
         }
 
         // Draw hover indicator
