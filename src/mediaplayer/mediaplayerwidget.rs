@@ -2,6 +2,7 @@ use eframe::egui;
 use crate::mediaplayer::scrubber::ScrubBar;
 use crate::mediaplayer::scrubber::TimeManager;
 use crate::ui::app_state::APP_STATE;
+use crate::api_request::imagerender::get_or_load_image; // Add this import
 use wasm_bindgen::prelude::*;
 use js_sys;
 use web_sys::console;
@@ -22,12 +23,45 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                 let total_size = ui.available_size();
                 ui.set_min_size(total_size);
 
-                // Album art placeholder
+                // Get album art URL from player state
+                let album_art_url = js_sys::eval("window.currentPlayerState")
+                    .ok()
+                    .and_then(|val| {
+                        if val.is_object() {
+                            let state = js_sys::Object::from(val);
+                            if let Ok(track_window) = js_sys::Reflect::get(&state, &"track_window".into()) {
+                                if let Ok(track) = js_sys::Reflect::get(&track_window, &"current_track".into()) {
+                                    if let Ok(album) = js_sys::Reflect::get(&track, &"album".into()) {
+                                        if let Ok(images) = js_sys::Reflect::get(&album, &"images".into()) {
+                                            let images_array = js_sys::Array::from(&images);
+                                            if images_array.length() > 0 {
+                                                if let Ok(image) = js_sys::Reflect::get(&images_array.get(0), &"url".into()) {
+                                                    return image.as_string();
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        None
+                    });
+
+                // Create rect outside of conditional blocks so it's available throughout
                 let rect = egui::Rect::from_min_size(
-                    ui.min_rect().min + egui::vec2((ui.available_width() -  square_size.x) * 0.5, padding),
+                    ui.min_rect().min + egui::vec2((ui.available_width() - square_size.x) * 0.5, padding),
                     square_size
                 );
-                ui.painter().rect_filled(rect, 10.0, egui::Color32::BLUE);
+
+                // Display album art or placeholder
+                if let Some(url) = album_art_url {
+                    if let Some(image) = get_or_load_image(ctx, &url) {
+                        ui.put(rect, image.fit_to_exact_size(square_size));
+                    }
+                } else {
+                    // Fallback to placeholder if no album art
+                    ui.painter().rect_filled(rect, 10.0, egui::Color32::DARK_GRAY);
+                }
                 ui.add_space(square_size.y + padding);
                 
                 time_manager.update();
