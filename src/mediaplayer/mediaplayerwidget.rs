@@ -103,11 +103,11 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                     ),
                     |ui| {
                         // Get current player state from JavaScript
-                        let player_state = js_sys::eval("window.player && window.player.getCurrentState()")
-                            .ok()
-                            .and_then(|val| val.as_bool());
-                        
-                        let mut is_playing = player_state.unwrap_or(false);
+                        let is_playing = if let Ok(is_playing) = js_sys::eval("window.isPlaying") {
+                            is_playing.as_bool().unwrap_or(false)
+                        } else {
+                            false
+                        };
                         
                         let mut button = ui.add(egui::Button::new(if is_playing {
                             egui::RichText::new("⏸").size(button_size.x)
@@ -130,7 +130,6 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                             if let Err(err) = result {
                                 console::error_1(&format!("Error calling playPause: {:?}", err).into());
                             }
-                            is_playing = !is_playing;
                         }
                     }
                 );
@@ -181,6 +180,20 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                 }
             });
         });
+    
+    // Update current time more frequently if playing
+    if time_manager.playing {
+        if let Ok(current_time) = js_sys::eval("window.currentPlaybackTime || 0.0") {
+            if let Some(time) = current_time.as_f64() {
+                time_manager.current_time = time;
+            } else {
+                // If no time available, increment locally for smoother UI
+                time_manager.current_time += 0.2; // Assume 200ms update rate
+            }
+        }
+        // Request more frequent repaints
+        ctx.request_repaint_after(std::time::Duration::from_millis(200));
+    }
     
     //continuous repaint while playing
     if time_manager.playing {

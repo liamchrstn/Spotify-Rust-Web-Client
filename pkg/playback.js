@@ -49,8 +49,8 @@ async function getCurrentPlayback() {
 function startPlaybackUpdates() {
     // Update immediately
     updatePlaybackState();
-    // Then update every 1 second
-    setInterval(updatePlaybackState, 1000);
+    // Then update every 200ms instead of 1000ms
+    setInterval(updatePlaybackState, 200);
 }
 
 async function updatePlaybackState() {
@@ -139,11 +139,22 @@ function initializePlayer() {
                         set_sdk_status('Not Ready');
                         return;
                     }
+                    
                     console.log('playPause called');
                     const state = await player.getCurrentState();
                     console.log('Current player state:', state);
                     
-                    if (!state) {
+                    if (state) {
+                        if (state.paused) {
+                            await player.resume();
+                            console.log('Playback resumed');
+                            set_sdk_status('Playing');
+                        } else {
+                            await player.pause();
+                            console.log('Playback paused');
+                            set_sdk_status('Paused');
+                        }
+                    } else {
                         // Check queue first
                         const token = localStorage.getItem('spotify_token');
                         try {
@@ -203,14 +214,6 @@ function initializePlayer() {
                             console.error('Error managing playback:', error);
                             set_sdk_status('Playback Error');
                         }
-                    } else if (state.paused) {
-                        await player.resume();
-                        console.log('Playback resumed');
-                        set_sdk_status('Playing');
-                    } else {
-                        await player.pause();
-                        console.log('Playback paused');
-                        set_sdk_status('Paused');
                     }
                 };
             } else {
