@@ -175,6 +175,14 @@ function initializePlayer() {
                                     if (savedTracksResponse.ok) {
                                         const savedTracks = await savedTracksResponse.json();
                                         if (savedTracks.items && savedTracks.items.length > 0) {
+                                            // Enable shuffle before playing
+                                            await fetch(`https://api.spotify.com/v1/me/player/shuffle?state=true&device_id=${deviceId}`, {
+                                                method: 'PUT',
+                                                headers: {
+                                                    'Authorization': `Bearer ${token}`
+                                                }
+                                            });
+                                            
                                             const trackUris = savedTracks.items.map(item => item.track.uri);
                                             await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
                                                 method: 'PUT',
