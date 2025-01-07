@@ -580,200 +580,63 @@ body {
 - Ensures cross-browser compatibility
 - Optimizes performance with hardware acceleration
 
-## spotify_egui.js
 
-The spotify_egui.js file serves as the WebAssembly binding layer between JavaScript and Rust, providing the interface for communication between the web frontend and the Rust backend. Here's a detailed technical breakdown:
+## pkg/spotify_egui.js
 
-### Memory Management
-```javascript
-const heap = new Array(128).fill(undefined);
-heap.push(undefined, null, true, false);
+The spotify_egui.js file is an automatically generated JavaScript binding file created by the wasm-bindgen tool during the Rust compilation process. This file should not be manually edited as any changes will be overwritten during the next build.
 
-function getObject(idx) { return heap[idx]; }
-function addHeapObject(obj) {
-    if (heap_next === heap.length) heap.push(heap.length + 1);
-    const idx = heap_next;
-    heap_next = heap[idx];
-    heap[idx] = obj;
-    return idx;
-}
+### Key Points
+- Generated from Rust source code
+- Contains WASM bindings and interface code
+- Recreated during each build
+- Manual edits will be lost
+- Should be treated as a build artifact
+
+
 ```
-- Implements custom heap management
-- Handles JavaScript object references
-- Provides efficient memory allocation
-- Manages object lifecycle
+- Import only
+- Do not modify
+- Do not version control
+- Reference through imports only
 
-### Text Encoding/Decoding
-```javascript
-const cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true });
-const cachedTextEncoder = new TextEncoder('utf-8');
-```
-- Implements UTF-8 text encoding/decoding
-- Uses cached encoder/decoder instances
-- Handles binary-to-string conversions
-- Manages WebAssembly string operations
 
-### WebAssembly Interface
-```javascript
-export function set_access_token(token) {
-    const ptr0 = passStringToWasm0(token, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len0 = WASM_VECTOR_LEN;
-    wasm.set_access_token(ptr0, len0);
-}
+## Potential Improvements
 
-export function set_sdk_status(status) {
-    const ptr0 = passStringToWasm0(status, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len0 = WASM_VECTOR_LEN;
-    wasm.set_sdk_status(ptr0, len0);
-}
-```
-- Exports functions for Rust interaction
-- Handles token management
-- Manages SDK status updates
-- Provides WebAssembly memory management
+After analyzing the pre-WASM implementation, here are several potential improvements that could enhance the application:
 
-### Error Handling
-```javascript
-function handleError(f, args) {
-    try {
-        return f.apply(this, args);
-    } catch (e) {
-        wasm.__wbindgen_exn_store(addHeapObject(e));
-    }
-}
-```
-- Implements comprehensive error handling
-- Manages JavaScript-to-Rust error propagation
-- Provides error context preservation
-- Ensures proper error recovery
+### Authentication (auth.js)
+1. **Token Security**
+   - Move token storage from localStorage to more secure HttpOnly cookies
+   - Implement encryption for stored tokens
 
-### WebAssembly Initialization
-```javascript
-async function __wbg_init(module_or_path) {
-    if (wasm !== undefined) return wasm;
-    const imports = __wbg_get_imports();
-    if (typeof module_or_path === 'string' || module_or_path instanceof Request || module_or_path instanceof URL) {
-        module_or_path = fetch(module_or_path);
-    }
-    const { instance, module } = await __wbg_load(await module_or_path, imports);
-    return __wbg_finalize_init(instance, module);
-}
-```
-- Manages WebAssembly module initialization
-- Handles dynamic module loading
-- Implements import binding
-- Provides initialization finalization
+2. **Error Recovery**
+   - Implement automatic retry logic for failed token refreshes
+   - Add graceful session recovery after connection loss
 
-### DOM Integration
-```javascript
-imports.wbg.__wbg_instanceof_Window_d2514c6a7ee7ba60 = function(arg0) {
-    let result;
-    try {
-        result = getObject(arg0) instanceof Window;
-    } catch (_) {
-        result = false;
-    }
-    const ret = result;
-    return ret;
-};
-```
-- Provides DOM type checking
-- Implements instance verification
-- Handles browser API integration
-- Manages DOM event binding
+### Application Initialization (api.js)
+1. **Performance**
+   - Implement lazy loading for non-critical components
+   - Add resource preloading for common assets
+   - Implement progressive enhancement for faster initial load
 
-### WebGL Context
-```javascript
-imports.wbg.__wbg_getContext_5eaf5645cd6acb46 = function() {
-    return handleError(function (arg0, arg1, arg2) {
-        const ret = getObject(arg0).getContext(getStringFromWasm0(arg1, arg2));
-        return isLikeNone(ret) ? 0 : addHeapObject(ret);
-    }, arguments);
-};
-```
-- Manages WebGL context creation
-- Handles graphics initialization
-- Provides context error handling
-- Implements context management
 
-### Technical Notes
-- Implements WebAssembly binding layer
-- Provides memory management utilities
-- Handles string encoding/decoding
-- Manages object references
-- Implements error propagation
-- Provides DOM integration
-- Handles WebGL context
-- Uses ES6 module system
-- Implements async initialization
-- Provides type checking utilities
-- Manages resource cleanup
-- Implements secure memory handling
-- Provides debugging capabilities
-- Ensures cross-platform compatibility
+### Playback Integration (playback.js)
+1. **State Management**
+   - Implement a more robust state machine for player states
+   - Add state persistence for session recovery
+   - Improve synchronization between UI and player state
 
-## package.json
+2. **Offline Support**
+   - Add offline playback capabilities for cached content
+   - Implement queue persistence
+   - Add background playback support
 
-The package.json file defines the npm package configuration for the WebAssembly module and its JavaScript bindings. Here's a detailed technical breakdown:
 
-### Package Metadata
-```json
-{
-  "name": "spotify-egui",
-  "version": "0.1.0",
-  "type": "module"
-}
-```
-- Defines package name and version
-- Specifies ES module type for modern JavaScript
-- Follows semantic versioning
 
-### File Distribution
-```json
-{
-  "files": [
-    "spotify_egui_bg.wasm",
-    "spotify_egui.js",
-    "spotify_egui.d.ts"
-  ]
-}
-```
-- Lists distributed package files:
-  * WebAssembly binary (`.wasm`)
-  * JavaScript bindings (`.js`)
-  * TypeScript definitions (`.d.ts`)
-- Ensures proper package bundling
 
-### Entry Points
-```json
-{
-  "main": "spotify_egui.js",
-  "types": "spotify_egui.d.ts"
-}
-```
-- Specifies main JavaScript entry point
-- Provides TypeScript type definitions
-- Enables proper module resolution
+### Documentation
+1. **Code Documentation**
+   - Add JSDoc comments for all functions
+   - Implement automated documentation generation
+   - Add architecture diagrams
 
-### Side Effects
-```json
-{
-  "sideEffects": [
-    "./snippets/*"
-  ]
-}
-```
-- Declares side effect patterns
-- Optimizes tree-shaking
-- Improves bundler optimization
-
-### Technical Notes
-- Implements npm package configuration
-- Supports WebAssembly distribution
-- Provides TypeScript integration
-- Enables ES module usage
-- Optimizes bundle size
-- Ensures proper module resolution
-- Maintains package integrity
-- Supports modern build tools
-- Enables efficient dependency management
