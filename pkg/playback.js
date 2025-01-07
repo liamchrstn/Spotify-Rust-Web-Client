@@ -144,31 +144,55 @@ function initializePlayer() {
                     console.log('Current player state:', state);
                     
                     if (!state) {
-                        // Start playback of a default track if nothing is playing
-                        console.log('Starting default playback');
+                        // Check queue first
                         const token = localStorage.getItem('spotify_token');
-                        
                         try {
-                            const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-                                method: 'PUT',
+                            // Check queue
+                            const queueResponse = await fetch('https://api.spotify.com/v1/me/player/queue', {
                                 headers: {
-                                    'Authorization': `Bearer ${token}`,
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    uris: ['spotify:track:4uLU6hMCjMI75M1A2tKUQC'] // Default track URI
-                                })
+                                    'Authorization': `Bearer ${token}`
+                                }
                             });
                             
-                            if (response.ok) {
-                                console.log('Started default playback');
-                                set_sdk_status('Playing');
-                            } else {
-                                console.error('Failed to start playback');
-                                set_sdk_status('Playback Error');
+                            if (queueResponse.ok) {
+                                const queueData = await queueResponse.json();
+                                if (queueData.queue && queueData.queue.length > 0) {
+                                    // Play next song in queue
+                                    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+                                        method: 'PUT',
+                                        headers: {
+                                            'Authorization': `Bearer ${token}`
+                                        }
+                                    });
+                                } else {
+                                    // If queue is empty, play from saved tracks
+                                    const savedTracksResponse = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
+                                        headers: {
+                                            'Authorization': `Bearer ${token}`
+                                        }
+                                    });
+                                    
+                                    if (savedTracksResponse.ok) {
+                                        const savedTracks = await savedTracksResponse.json();
+                                        if (savedTracks.items && savedTracks.items.length > 0) {
+                                            const trackUris = savedTracks.items.map(item => item.track.uri);
+                                            await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+                                                method: 'PUT',
+                                                headers: {
+                                                    'Authorization': `Bearer ${token}`,
+                                                    'Content-Type': 'application/json'
+                                                },
+                                                body: JSON.stringify({
+                                                    uris: trackUris
+                                                })
+                                            });
+                                        }
+                                    }
+                                }
                             }
+                            set_sdk_status('Playing');
                         } catch (error) {
-                            console.error('Error starting playback:', error);
+                            console.error('Error managing playback:', error);
                             set_sdk_status('Playback Error');
                         }
                     } else if (state.paused) {
