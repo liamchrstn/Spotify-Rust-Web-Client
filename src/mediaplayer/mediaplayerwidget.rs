@@ -120,6 +120,13 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                             if is_ready.as_bool() != Some(true) {
                                 button = button.on_hover_text("Player not ready");
                                 button = button.interact(egui::Sense::hover());
+                            } else {
+                                // Add hover text based on current playing state
+                                button = button.on_hover_text(if is_playing {
+                                    "Pause"
+                                } else {
+                                    "Play"
+                                });
                             }
                         }
                         

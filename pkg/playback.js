@@ -119,7 +119,11 @@ function initializePlayer() {
             if (success) {
                 console.log('Successfully connected to Spotify Player');
                 set_sdk_status('Connected');
-                startPlaybackUpdates(); // Add this line
+                startPlaybackUpdates();
+                window.isReady = true;  // Add this line to set ready status
+
+                // Make the player globally accessible for seeking
+                window.spotifyPlayer = player;
                 
                 // Add play/pause functionality
                 // Store device ID and enable play button when ready
