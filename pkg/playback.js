@@ -8,6 +8,61 @@ window.onSpotifyWebPlaybackSDKReady = () => {
     initializePlayer();
 };
 
+async function getCurrentPlayback() {
+    const token = localStorage.getItem('spotify_token');
+    if (!token) return null;
+
+    try {
+        const response = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.status === 204) {
+            return null; // No track playing
+        }
+
+        if (response.ok) {
+            const data = await response.json();
+            return {
+                track_window: {
+                    current_track: {
+                        name: data.item.name,
+                        album: {
+                            images: data.item.album.images
+                        },
+                        artists: data.item.artists
+                    }
+                },
+                paused: !data.is_playing,
+                position: data.progress_ms,
+                duration: data.item.duration_ms
+            };
+        }
+    } catch (error) {
+        console.error('Error fetching current playback:', error);
+        return null;
+    }
+}
+
+function startPlaybackUpdates() {
+    // Update immediately
+    updatePlaybackState();
+    // Then update every 1 second
+    setInterval(updatePlaybackState, 1000);
+}
+
+async function updatePlaybackState() {
+    const state = await getCurrentPlayback();
+    if (state) {
+        window.currentPlayerState = state;
+        window.currentPlaybackTime = state.position;
+        window.totalDuration = state.duration;
+        window.isPlaying = !state.paused;
+    }
+}
+
 function initializePlayer() {
     const token = localStorage.getItem('spotify_token');
     if (!token) {
@@ -64,6 +119,7 @@ function initializePlayer() {
             if (success) {
                 console.log('Successfully connected to Spotify Player');
                 set_sdk_status('Connected');
+                startPlaybackUpdates(); // Add this line
                 
                 // Add play/pause functionality
                 // Store device ID and enable play button when ready
