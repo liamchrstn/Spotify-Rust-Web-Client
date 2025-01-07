@@ -40,8 +40,11 @@ pub async fn fetch_user_profile(token: String) {
 pub async fn fetch_saved_tracks(token: String) {
     let mut state = APP_STATE.lock().unwrap();
     state.is_loading = true;
-    state.show_tracks = true;  // Show window immediately
-    drop(state); // Release lock before async operations
+    state.show_tracks = true;
+    drop(state);
+
+    // Add small delay to ensure loading state is visible
+    gloo_timers::future::TimeoutFuture::new(100).await;
 
     // Try to load from storage first
     if let Some(stored_tracks) = load_tracks() {
