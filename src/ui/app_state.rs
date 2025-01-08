@@ -18,6 +18,7 @@ pub struct AppState {
     pub is_loading: bool,  // Add loading state
     pub view_mode: ViewMode,
     pub search_text: String,
+    pub settings_window_open: bool,
 }
 
 impl Default for AppState {
@@ -33,6 +34,7 @@ impl Default for AppState {
             is_loading: false,  // Initialize loading state
             view_mode: ViewMode::Grid,  // Changed from List to Grid
             search_text: String::new(),
+            settings_window_open: false,
         }
     }
 }
