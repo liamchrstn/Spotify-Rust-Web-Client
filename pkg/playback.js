@@ -71,8 +71,17 @@ function initializePlayer() {
         return;
     }
 
+    // Disconnect existing player if it exists
+    if (window.spotifyPlayer) {
+        window.spotifyPlayer.disconnect();
+    }
+
+    // Get custom player name from localStorage or use default
+    const playerName = localStorage.getItem('player_name') || 'Web Playback SDK Quick Start Player';
+    console.log('Initializing player with name:', playerName);
+
     const player = new Spotify.Player({
-        name: 'Web Playback SDK Quick Start Player',
+        name: playerName,
         getOAuthToken: cb => { cb(token); }
     });
 
@@ -230,6 +239,12 @@ function initializePlayer() {
             set_sdk_status('Connection Error');
         });
 }
+
+// Add reinitialize function
+window.reinitializePlayer = () => {
+    console.log('Reinitializing player with new settings...');
+    initializePlayer();
+};
 
 // Export for use in other modules
 export { initializePlayer };
