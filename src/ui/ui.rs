@@ -24,7 +24,9 @@ impl eframe::App for SpotifyApp {
                         ui.heading(format!("Welcome, {}", name));
                         
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            global_theme_switch(ui);
+                            if ui.button("⛭").clicked() {
+                                state.settings_window_open = true;
+                            }
                             if ui.button("Logout").clicked() {
                                 if let Some(window) = window() {
                                     if let Ok(local_storage) = window.local_storage() {
@@ -63,7 +65,6 @@ impl eframe::App for SpotifyApp {
                         self.sdk_status = status.clone();
                     }
                     ui.label(&self.sdk_status); // Display SDK status
-                    
                         
                         
                     
@@ -80,6 +81,7 @@ impl eframe::App for SpotifyApp {
 
         // Show saved tracks window in a separate scope
         show_saved_tracks_window(ctx);
+        super::settings::show_settings_window(ctx);
         
         // Check loading state in a separate scope
         let is_loading = {
