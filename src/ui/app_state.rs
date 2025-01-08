@@ -20,6 +20,7 @@ pub struct AppState {
     pub search_text: String,
     pub settings_window_open: bool,
     pub player_name: String,  // Add this field
+    pub settings_window_locked: bool,
 }
 
 impl Default for AppState {
@@ -43,6 +44,7 @@ impl Default for AppState {
             search_text: String::new(),
             settings_window_open: false,
             player_name,
+            settings_window_locked: true,
         }
     }
 }
