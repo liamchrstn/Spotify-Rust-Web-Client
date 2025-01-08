@@ -19,10 +19,17 @@ pub struct AppState {
     pub view_mode: ViewMode,
     pub search_text: String,
     pub settings_window_open: bool,
+    pub player_name: String,  // Add this field
 }
 
 impl Default for AppState {
     fn default() -> Self {
+        // Try to get the stored player name from localStorage
+        let player_name = web_sys::window()
+            .and_then(|window| window.local_storage().ok().flatten())
+            .and_then(|storage| storage.get_item("player_name").ok().flatten())
+            .unwrap_or_else(|| "Web Playback SDK Quick Start Player".to_string());
+
         AppState { 
             username: None,
             saved_tracks: Vec::new(),
@@ -35,6 +42,7 @@ impl Default for AppState {
             view_mode: ViewMode::Grid,  // Changed from List to Grid
             search_text: String::new(),
             settings_window_open: false,
+            player_name,
         }
     }
 }
