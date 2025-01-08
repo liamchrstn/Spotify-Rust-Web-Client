@@ -3,6 +3,7 @@ use super::app_state::APP_STATE;
 use egui_theme_switch::global_theme_switch;
 use wasm_bindgen::JsValue;
 use web_sys::{window, Storage};
+use crate::api_request::token::SDK_STATUS; // Add this import
 
 pub fn show_settings_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
@@ -26,6 +27,9 @@ pub fn show_settings_window(ctx: &Context) {
 
     egui::Window::new("Settings")
         .open(&mut settings_open)
+        .default_pos([ctx.screen_rect().right() - 300.0, ctx.screen_rect().top() + 40.0])
+        .default_width(280.0)
+        .movable(!state.settings_window_locked)
         .show(ctx, |ui| {
             ui.heading("Appearance");
             ui.horizontal(|ui| {
@@ -34,12 +38,31 @@ pub fn show_settings_window(ctx: &Context) {
             });
             
             ui.add_space(16.0);
-            ui.heading("Player Settings");
+            ui.heading("Position Lock");
+            if ui.button(if state.settings_window_locked { 
+                egui::RichText::new("🔒").size(24.0) 
+            } else { 
+                egui::RichText::new("🔓").size(24.0)
+            }).clicked() {
+                state.settings_window_locked = !state.settings_window_locked;
+            }
+
+
+            ui.add_space(16.0);
+            ui.heading("Window Management");
+            if ui.button("Close All Windows").clicked() {
+                state.tracks_window_open = false;
+                state.player_window_open = false;
+                state.settings_window_open = false;
+            }
+            
+            ui.add_space(16.0);
+            ui.heading("Web Player Settings");
             ui.horizontal(|ui| {
                 unsafe {
-                    ui.label("Player Name:");
-                    let name_response = ui.text_edit_singleline(&mut PLAYER_NAME)
-                        .on_hover_text("Rename the Spotify Player device. This is visible across all Spotify Connect devices.");
+                    ui.label("Player Name:")
+                    .on_hover_text("Rename the Spotify Player device. This is visible across all Spotify Connect devices.");
+                    let name_response = ui.text_edit_singleline(&mut PLAYER_NAME);
                     let name_changed = PLAYER_NAME != ORIGINAL_NAME;
                     
                     let apply_button = ui.add_enabled(
@@ -62,6 +85,12 @@ pub fn show_settings_window(ctx: &Context) {
                     }
                 }
             });
+            ui.add_space(8.0);
+            ui.label("SDK Status")
+            .on_hover_text("The current status of the Spotify Web Playback SDK.");
+            if let Some(status) = &*SDK_STATUS.lock().unwrap() {
+                ui.label(status); // Display SDK status
+            }
             ui.add_space(8.0);
         });
 
