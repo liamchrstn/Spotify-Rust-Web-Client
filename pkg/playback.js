@@ -51,6 +51,20 @@ function startPlaybackUpdates() {
     updatePlaybackState();
     // Then update every 200ms instead of 1000ms
     setInterval(updatePlaybackState, 200);
+
+    // Add shuffle state to the update
+    const fetchShuffleState = async () => {
+        const response = await fetch('https://api.spotify.com/v1/me/player', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('spotify_token')}`
+            }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            window.shuffleState = data.shuffle_state;
+        }
+    };
+    fetchShuffleState();
 }
 
 async function updatePlaybackState() {
@@ -92,6 +106,78 @@ async function skipToPrevious() {
         });
     } catch (error) {
         console.error('Error skipping to previous track:', error);
+    }
+}
+
+async function toggleShuffle() {
+    const token = localStorage.getItem('spotify_token');
+    if (!token) return;
+
+    try {
+        // Get current state first
+        const response = await fetch('https://api.spotify.com/v1/me/player', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            const newState = !data.shuffle_state;
+            
+            await fetch(`https://api.spotify.com/v1/me/player/shuffle?state=${newState}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            // Update shuffle state in window
+            window.shuffleState = newState;
+        }
+    } catch (error) {
+        console.error('Error toggling shuffle:', error);
+    }
+}
+
+async function getDevices() {
+    const token = localStorage.getItem('spotify_token');
+    if (!token) return [];
+
+    try {
+        const response = await fetch('https://api.spotify.com/v1/me/player/devices', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            window.availableDevices = data.devices;
+            return data.devices;
+        }
+    } catch (error) {
+        console.error('Error fetching devices:', error);
+    }
+    return [];
+}
+
+async function transferPlayback(deviceId) {
+    const token = localStorage.getItem('spotify_token');
+    if (!token) return;
+
+    try {
+        await fetch('https://api.spotify.com/v1/me/player', {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                device_ids: [deviceId],
+                play: true
+            })
+        });
+    } catch (error) {
+        console.error('Error transferring playback:', error);
     }
 }
 
@@ -281,6 +367,11 @@ window.reinitializePlayer = () => {
     console.log('Reinitializing player with new settings...');
     initializePlayer();
 };
+
+// Add to window object
+window.toggleShuffle = toggleShuffle;
+window.getDevices = getDevices;
+window.transferPlayback = transferPlayback;
 
 // Export for use in other modules
 export { initializePlayer };
