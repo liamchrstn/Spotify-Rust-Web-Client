@@ -18,7 +18,7 @@ fn draw_vlines<R>(ui: &mut Ui, _height: f32, draw_left: bool, next: impl FnOnce(
 
 pub fn show_saved_tracks_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
-    if !state.show_tracks {
+    if (!state.show_tracks) {
         return;
     }
 
@@ -31,7 +31,7 @@ pub fn show_saved_tracks_window(ctx: &Context) {
     
     let window = egui::Window::new("Liked Songs")
         .open(&mut tracks_window_open)
-        .default_pos([
+        .current_pos([
             state.liked_songs_window_pos.0, 
             state.liked_songs_window_pos.1
         ])
@@ -107,6 +107,7 @@ pub fn show_saved_tracks_window(ctx: &Context) {
         
     if let Some(resp) = window {
         let r = resp.response.rect;
+        // Always update position since this window isn't being reset
         state.liked_songs_window_pos = (r.min.x, r.min.y);
     }
 

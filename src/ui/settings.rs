@@ -24,10 +24,11 @@ pub fn show_settings_window(ctx: &Context) {
     }
 
     let mut settings_open = state.settings_window_open;
+    let mut reset_triggered = false;  // Move this flag outside the closure
 
     let show_response = egui::Window::new("Settings")
         .open(&mut settings_open)
-        .default_pos([
+        .current_pos([
             state.settings_window_pos.0, 
             state.settings_window_pos.1
         ])
@@ -62,6 +63,8 @@ pub fn show_settings_window(ctx: &Context) {
             // Add Reset Window Positions button
             if ui.button("Reset Window Positions").clicked() {
                 state.reset_areas();
+                reset_triggered = true;  // Set the flag when reset is triggered
+                ctx.request_repaint();
             }
             
             ui.add_space(16.0);
@@ -112,9 +115,13 @@ pub fn show_settings_window(ctx: &Context) {
             }
         });
 
+    // Update the window's position after response
     if let Some(resp) = show_response {
         let rect = resp.response.rect;
-        state.settings_window_pos = (rect.min.x, rect.min.y);
+        // Only update position if we're not actively resetting
+        if !reset_triggered {
+            state.settings_window_pos = (rect.min.x, rect.min.y);
+        }
     }
 
     state.settings_window_open = settings_open;
