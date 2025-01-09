@@ -63,6 +63,38 @@ async function updatePlaybackState() {
     }
 }
 
+async function skipToNext() {
+    const token = localStorage.getItem('spotify_token');
+    if (!token) return;
+
+    try {
+        await fetch('https://api.spotify.com/v1/me/player/next', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+    } catch (error) {
+        console.error('Error skipping to next track:', error);
+    }
+}
+
+async function skipToPrevious() {
+    const token = localStorage.getItem('spotify_token');
+    if (!token) return;
+
+    try {
+        await fetch('https://api.spotify.com/v1/me/player/previous', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+    } catch (error) {
+        console.error('Error skipping to previous track:', error);
+    }
+}
+
 function initializePlayer() {
     const token = localStorage.getItem('spotify_token');
     if (!token) {
@@ -229,6 +261,10 @@ function initializePlayer() {
                         }
                     }
                 };
+
+                // Add skip functions to window
+                window.skipToNext = skipToNext;
+                window.skipToPrevious = skipToPrevious;
             } else {
                 console.log('Failed to connect to Spotify Player');
                 set_sdk_status('Connection Failed');
