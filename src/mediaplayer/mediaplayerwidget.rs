@@ -6,6 +6,7 @@ use crate::api_request::imagerender::get_or_load_image; // Add this import
 use wasm_bindgen::prelude::*;
 use js_sys;
 use web_sys::console;
+use egui_extras::{StripBuilder, Size}; // Add these imports
 
 pub fn show_mediaplayer_window(ctx: &egui::Context) {
     let mut state = APP_STATE.lock().unwrap();
@@ -38,6 +39,8 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
     // Media player window
     let window_response = egui::Window::new("Music Player")
         .resizable(true)
+        .default_size([300.0, 500.0])
+        .min_size([250.0, 400.0])
         .open(&mut window_open)
         .current_pos([
             music_player_pos.0, 
@@ -45,156 +48,183 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
         ])
         .collapsible(true)
         .show(ctx, |ui| {
-            ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                let padding = 20.0;
-                let square_size = egui::vec2(100.0, 100.0);
-                let total_size = ui.available_size();
-                ui.set_min_size(total_size);
+            // Calculate the album art size once, before the StripBuilder
+            let square_size = ui.available_width().min(200.0);
 
-                // Get album art URL from player state
-                let album_art_url = js_sys::eval("window.currentPlayerState")
-                    .ok()
-                    .and_then(|val| {
-                        if val.is_object() {
-                            let state = js_sys::Object::from(val);
-                            if let Ok(track_window) = js_sys::Reflect::get(&state, &"track_window".into()) {
-                                if let Ok(track) = js_sys::Reflect::get(&track_window, &"current_track".into()) {
-                                    if let Ok(album) = js_sys::Reflect::get(&track, &"album".into()) {
-                                        if let Ok(images) = js_sys::Reflect::get(&album, &"images".into()) {
-                                            let images_array = js_sys::Array::from(&images);
-                                            if images_array.length() > 0 {
-                                                if let Ok(image) = js_sys::Reflect::get(&images_array.get(0), &"url".into()) {
-                                                    return image.as_string();
+            StripBuilder::new(ui)
+                .size(Size::relative(0.4))    // Album art
+                .size(Size::exact(60.0))      // Controls
+                .size(Size::exact(40.0))      // Scrubber
+                .size(Size::remainder())      // Track info
+                .vertical(|mut strip| {
+                    // Album art section
+                    strip.cell(|ui| {
+                        ui.with_layout(egui::Layout::centered_and_justified(egui::Direction::LeftToRight), |ui| {
+                            let art_size = egui::vec2(square_size, square_size);
+                            let rect = egui::Rect::from_center_size(
+                                ui.available_rect_before_wrap().center(),
+                                art_size
+                            );
+
+                            // Get album art URL from player state
+                            let album_art_url = js_sys::eval("window.currentPlayerState")
+                                .ok()
+                                .and_then(|val| {
+                                    if val.is_object() {
+                                        let state = js_sys::Object::from(val);
+                                        if let Ok(track_window) = js_sys::Reflect::get(&state, &"track_window".into()) {
+                                            if let Ok(track) = js_sys::Reflect::get(&track_window, &"current_track".into()) {
+                                                if let Ok(album) = js_sys::Reflect::get(&track, &"album".into()) {
+                                                    if let Ok(images) = js_sys::Reflect::get(&album, &"images".into()) {
+                                                        let images_array = js_sys::Array::from(&images);
+                                                        if images_array.length() > 0 {
+                                                            if let Ok(image) = js_sys::Reflect::get(&images_array.get(0), &"url".into()) {
+                                                                return image.as_string();
+                                                            }
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
                                     }
-                                }
-                            }
-                        }
-                        None
-                    });
-
-                // Create rect outside of conditional blocks so it's available throughout
-                let rect = egui::Rect::from_min_size(
-                    ui.min_rect().min + egui::vec2((ui.available_width() - square_size.x) * 0.5, padding),
-                    square_size
-                );
-
-                // Display album art or placeholder
-                if let Some(url) = album_art_url {
-                    if let Some(image) = get_or_load_image(ctx, &url) {
-                        ui.put(rect, image.fit_to_exact_size(square_size));
-                    }
-                } else {
-                    // Fallback to placeholder if no album art
-                    ui.painter().rect_filled(rect, 10.0, egui::Color32::DARK_GRAY);
-                }
-                ui.add_space(square_size.y + padding);
-                
-                time_manager.update();
-                
-                // Media controls
-                let mut scrub_bar = ScrubBar::new(time_manager.end_time);
-                let scrubber_height = 30.0;
-                scrub_bar.add(ui, &mut time_manager.current_time, egui::vec2(square_size.x, scrubber_height));
-
-                // Ensure the play container is below the scrubber
-                ui.add_space(10.0); // Add some space between the scrubber and the play container
-                let center_x = rect.center().x;
-                let button_size = egui::vec2(40.0, 40.0); // Define button size here
-                let spacing = 10.0;
-                let button_container_width = button_size.x * 3.0 + spacing * 2.0; // Width of the button container
-                ui.allocate_ui_at_rect(
-                    egui::Rect::from_center_size(
-                        egui::pos2(center_x, rect.max.y + padding + scrubber_height), // Adjusted y position
-                        egui::vec2(button_container_width, button_size.y)
-                    ),
-                    |ui| {
-                        // Get current player state from JavaScript
-                        let is_playing = if let Ok(is_playing) = js_sys::eval("window.isPlaying") {
-                            is_playing.as_bool().unwrap_or(false)
-                        } else {
-                            false
-                        };
-                        
-                        let mut button = ui.add(egui::Button::new(if is_playing {
-                            egui::RichText::new("⏸").size(button_size.x)
-                        } else {
-                            egui::RichText::new("▶").size(button_size.x)
-                        }));
-                        
-                        // Disable button if player isn't ready
-                        if let Ok(is_ready) = js_sys::eval("window.isReady") {
-                            if is_ready.as_bool() != Some(true) {
-                                button = button.on_hover_text("Player not ready");
-                                button = button.interact(egui::Sense::hover());
-                            } else {
-                                // Add hover text based on current playing state
-                                button = button.on_hover_text(if is_playing {
-                                    "Pause"
-                                } else {
-                                    "Play"
+                                    None
                                 });
-                            }
-                        }
-                        
-                        if button.clicked() {
-                            console::log_1(&"Play button clicked in Rust UI".into());
-                            // Toggle play/pause through JavaScript
-                            let result = js_sys::eval("console.log('Calling playPause'); window.playPause && window.playPause()");
-                            if let Err(err) = result {
-                                console::error_1(&format!("Error calling playPause: {:?}", err).into());
-                            }
-                        }
-                    }
-                );
 
-                // Get current track info from stored state
-                let track_info = js_sys::eval("window.currentPlayerState")
-                    .ok()
-                    .and_then(|val| {
-                        if val.is_object() {
-                            let state = js_sys::Object::from(val);
-                            if let Ok(track_window) = js_sys::Reflect::get(&state, &"track_window".into()) {
-                                if let Ok(track) = js_sys::Reflect::get(&track_window, &"current_track".into()) {
-                                    if let (Ok(name_value), Ok(artists_value)) = (
-                                        js_sys::Reflect::get(&track, &"name".into()),
-                                        js_sys::Reflect::get(&track, &"artists".into())
-                                    ) {
-                                        let title = name_value.as_string();
-                                        let artist = {
-                                            let artists_array = js_sys::Array::from(&artists_value);
-                                            if artists_array.length() > 0 {
-                                                if let Ok(artist_obj) = js_sys::Reflect::get(&artists_array.get(0), &"name".into()) {
-                                                    artist_obj.as_string()
-                                                } else {
-                                                    None
-                                                }
-                                            } else {
-                                                None
-                                            }
+                            if let Some(url) = album_art_url {
+                                if let Some(image) = get_or_load_image(ctx, &url) {
+                                    ui.put(rect, image.fit_to_exact_size(art_size));
+                                }
+                            } else {
+                                ui.painter().rect_filled(rect, 10.0, egui::Color32::DARK_GRAY);
+                            }
+                        });
+                    });
+
+                    // Controls section
+                    strip.strip(|builder| {
+                        builder
+                            .size(Size::remainder())
+                            .size(Size::exact(40.0))
+                            .size(Size::remainder())
+                            .horizontal(|mut strip| {
+                                strip.cell(|_| ()); // Left spacing
+                                strip.cell(|ui| {
+                                    ui.vertical_centered(|ui| {
+                                        let is_playing = if let Ok(is_playing) = js_sys::eval("window.isPlaying") {
+                                            is_playing.as_bool().unwrap_or(false)
+                                        } else {
+                                            false
                                         };
-                                        
-                                        if let (Some(title), Some(artist)) = (title, artist) {
-                                            return Some((title, artist));
+
+                                        let is_ready = if let Ok(is_ready) = js_sys::eval("window.isReady") {
+                                            is_ready
+                                        } else {
+                                            JsValue::from(false)
+                                        };
+
+                                        let button = ui.add_sized(
+                                            [40.0, 40.0],
+                                            egui::Button::new(
+                                                if is_playing {
+                                                    egui::RichText::new("⏸")
+                                                } else {
+                                                    egui::RichText::new("▶")
+                                                }
+                                            )
+                                        )
+                                        .on_hover_text(if is_ready.as_bool() != Some(true) {
+                                            "Player not ready"
+                                        } else if is_playing {
+                                            "Pause"
+                                        } else {
+                                            "Play"
+                                        });
+
+                                        if button.clicked() {
+                                            console::log_1(&"Play button clicked in Rust UI".into());
+                                            let _ = js_sys::eval("console.log('Calling playPause'); window.playPause && window.playPause()");
+                                        }
+                                    });
+                                });
+                                strip.cell(|_| ()); // Right spacing
+                            });
+                    });
+
+                    // Scrubber section
+                    strip.cell(|ui| {
+                        ui.vertical_centered(|ui| {
+                            let mut scrub_bar = ScrubBar::new(time_manager.end_time);
+                            scrub_bar.add(
+                                ui, 
+                                &mut time_manager.current_time, 
+                                egui::vec2(square_size, 20.0)
+                            );
+                        });
+                    });
+
+                    // Track info section
+                    strip.strip(|builder| {
+                        // Get current track info from stored state
+                        let track_info = js_sys::eval("window.currentPlayerState")
+                            .ok()
+                            .and_then(|val| {
+                                if val.is_object() {
+                                    let state = js_sys::Object::from(val);
+                                    if let Ok(track_window) = js_sys::Reflect::get(&state, &"track_window".into()) {
+                                        if let Ok(track) = js_sys::Reflect::get(&track_window, &"current_track".into()) {
+                                            if let (Ok(name_value), Ok(artists_value)) = (
+                                                js_sys::Reflect::get(&track, &"name".into()),
+                                                js_sys::Reflect::get(&track, &"artists".into())
+                                            ) {
+                                                let title = name_value.as_string();
+                                                let artist = {
+                                                    let artists_array = js_sys::Array::from(&artists_value);
+                                                    if artists_array.length() > 0 {
+                                                        if let Ok(artist_obj) = js_sys::Reflect::get(&artists_array.get(0), &"name".into()) {
+                                                            artist_obj.as_string()
+                                                        } else {
+                                                            None
+                                                        }
+                                                    } else {
+                                                        None
+                                                    }
+                                                };
+                                                
+                                                if let (Some(title), Some(artist)) = (title, artist) {
+                                                    return Some((title, artist));
+                                                }
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        }
-                        None
-                    });
+                                None
+                            });
 
-                // Display track info or placeholder
-                if let Some((title, artist)) = track_info {
-                    ui.label(egui::RichText::new(title).heading());
-                    ui.label(egui::RichText::new(artist).small());
-                } else {
-                    ui.label(egui::RichText::new("No track playing").heading());
-                    ui.label(egui::RichText::new("Select a track to play").small());
-                }
-            });
+                        builder
+                            .size(Size::exact(30.0))  // Title
+                            .size(Size::exact(20.0))  // Artist
+                            .vertical(|mut strip| {
+                                strip.cell(|ui| {
+                                    ui.vertical_centered(|ui| {
+                                        if let Some((title, _)) = &track_info {
+                                            ui.label(egui::RichText::new(title).heading());
+                                        } else {
+                                            ui.label(egui::RichText::new("No track playing").heading());
+                                        }
+                                    });
+                                });
+                                strip.cell(|ui| {
+                                    ui.vertical_centered(|ui| {
+                                        if let Some((_, artist)) = &track_info {
+                                            ui.label(egui::RichText::new(artist).small());
+                                        } else {
+                                            ui.label(egui::RichText::new("Select a track to play").small());
+                                        }
+                                    });
+                                });
+                            });
+                    });
+                });
         });
     
     // Re-lock to update window state if it changed

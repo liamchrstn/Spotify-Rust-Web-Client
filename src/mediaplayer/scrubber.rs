@@ -99,7 +99,7 @@ impl ScrubBar {
             Color32::WHITE,
         );
 
-        // Draw time labels
+        // Draw time labels using dynamic layout
         let scrub_rect = scrub_painter.clip_rect();
         let text_height = ui.text_style_height(&egui::TextStyle::Body);
         let y_offset = (scrub_rect.height() - text_height) / 2.0;
