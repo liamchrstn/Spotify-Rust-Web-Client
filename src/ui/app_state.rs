@@ -58,15 +58,12 @@ impl Default for AppState {
 impl AppState {
     pub fn reset_areas(&mut self) {
         // Reset window-related states to default
-        self.settings_window_open = false;
-        self.tracks_window_open = false;
-        self.player_window_open = false;
         self.tracks_window_size = (800.0, 600.0); // Default size
         self.view_mode = ViewMode::Grid; // Default view mode
         self.search_text.clear(); // Clear search text
         self.settings_window_pos = (1490.0, 30.0);
-        self.liked_songs_window_pos = (1069.0, 30.0);
-        self.music_player_window_pos = (238.0, 30.0);
+        self.liked_songs_window_pos = (238.0, 30.0);
+        self.music_player_window_pos = (1069.0, 30.0);
         // Add any additional reset logic as needed
     }
 }

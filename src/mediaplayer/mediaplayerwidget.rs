@@ -39,7 +39,7 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
     let window_response = egui::Window::new("Music Player")
         .resizable(true)
         .open(&mut window_open)
-        .default_pos([
+        .current_pos([
             music_player_pos.0, 
             music_player_pos.1
         ])
@@ -203,6 +203,7 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
 
     if let Some(resp) = window_response {
         let rect = resp.response.rect;
+        // Always update position since this window isn't being reset
         state.music_player_window_pos = (rect.min.x, rect.min.y);
     }
 
