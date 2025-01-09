@@ -4,4 +4,4 @@ target/
 site/pkg/spotify_egui.js
 *.lock
 random/
-pkg\spotify_egui.js
+pkg/spotify_egui.js
