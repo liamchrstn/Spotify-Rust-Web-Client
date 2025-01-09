@@ -39,8 +39,8 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
     // Media player window
     let window_response = egui::Window::new("Music Player")
         .resizable(true)
-        .default_size([300.0, 500.0])
-        .min_size([250.0, 400.0])
+        .default_size([300.0, 400.0])  // Reduced from 500.0
+        .min_size([250.0, 350.0])      // Reduced from 400.0
         .open(&mut window_open)
         .current_pos([
             music_player_pos.0, 
@@ -52,10 +52,10 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
             let square_size = ui.available_width().min(200.0);
 
             StripBuilder::new(ui)
-                .size(Size::relative(0.4))    // Album art
-                .size(Size::exact(60.0))      // Controls
-                .size(Size::exact(40.0))      // Scrubber
-                .size(Size::remainder())      // Track info
+                .size(Size::relative(0.5)) //Album art
+                .size(Size::exact(30.0))  //Scrubber
+                .size(Size::exact(50.0))  //Controls
+                .size(Size::exact(60.0))  //Track info
                 .vertical(|mut strip| {
                     // Album art section
                     strip.cell(|ui| {
@@ -99,6 +99,20 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                             }
                         });
                     });
+
+                    // Scrubber section
+                    strip.cell(|ui| {
+                        ui.vertical_centered(|ui| {
+                            let mut scrub_bar = ScrubBar::new(time_manager.end_time);
+                            scrub_bar.add(
+                                ui, 
+                                &mut time_manager.current_time, 
+                                egui::vec2(square_size, 20.0)
+                            );
+                        });
+                    });
+
+
 
                     // Controls section
                     strip.strip(|builder| {
@@ -150,17 +164,7 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                             });
                     });
 
-                    // Scrubber section
-                    strip.cell(|ui| {
-                        ui.vertical_centered(|ui| {
-                            let mut scrub_bar = ScrubBar::new(time_manager.end_time);
-                            scrub_bar.add(
-                                ui, 
-                                &mut time_manager.current_time, 
-                                egui::vec2(square_size, 20.0)
-                            );
-                        });
-                    });
+                    
 
                     // Track info section
                     strip.strip(|builder| {
