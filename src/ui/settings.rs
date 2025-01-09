@@ -7,7 +7,7 @@ use crate::api_request::token::SDK_STATUS; // Add this import
 
 pub fn show_settings_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
-    if !state.settings_window_open {
+    if (!state.settings_window_open) {
         return;
     }
 
@@ -16,7 +16,7 @@ pub fn show_settings_window(ctx: &Context) {
     static mut ORIGINAL_NAME: String = String::new();
 
     unsafe {
-        if !SETTINGS_INITIALIZED {
+        if (!SETTINGS_INITIALIZED) {
             PLAYER_NAME = state.player_name.clone();
             ORIGINAL_NAME = state.player_name.clone();
             SETTINGS_INITIALIZED = true;
@@ -25,9 +25,12 @@ pub fn show_settings_window(ctx: &Context) {
 
     let mut settings_open = state.settings_window_open;
 
-    egui::Window::new("Settings")
+    let show_response = egui::Window::new("Settings")
         .open(&mut settings_open)
-        .default_pos([ctx.screen_rect().right() - 300.0, ctx.screen_rect().top() + 40.0])
+        .default_pos([
+            state.settings_window_pos.0, 
+            state.settings_window_pos.1
+        ])
         .default_width(280.0)
         .movable(!state.settings_window_locked)
         .show(ctx, |ui| {
@@ -54,6 +57,11 @@ pub fn show_settings_window(ctx: &Context) {
                 state.tracks_window_open = false;
                 state.player_window_open = false;
                 state.settings_window_open = false;
+            }
+
+            // Add Reset Window Positions button
+            if ui.button("Reset Window Positions").clicked() {
+                state.reset_areas();
             }
             
             ui.add_space(16.0);
@@ -92,11 +100,26 @@ pub fn show_settings_window(ctx: &Context) {
                 ui.label(status); // Display SDK status
             }
             ui.add_space(8.0);
+
+            // Add section showing open window positions
+            ui.heading("Open Window Positions");
+            ui.label(format!("Settings Window: {:?}", state.settings_window_pos));
+            if state.tracks_window_open {
+                ui.label(format!("Tracks Window: {:?}", state.liked_songs_window_pos));
+            }
+            if state.player_window_open {
+                ui.label(format!("Player Window: {:?}", state.music_player_window_pos));
+            }
         });
+
+    if let Some(resp) = show_response {
+        let rect = resp.response.rect;
+        state.settings_window_pos = (rect.min.x, rect.min.y);
+    }
 
     state.settings_window_open = settings_open;
 
-    if !settings_open {
+    if (!settings_open) {
         unsafe {
             SETTINGS_INITIALIZED = false;
         }

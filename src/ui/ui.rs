@@ -25,6 +25,7 @@ impl eframe::App for SpotifyApp {
                         
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             if ui.button("⛭").clicked() {
+                                state.settings_window_pos = (600.0, 40.0);
                                 state.settings_window_open = true;
                             }
                             if ui.button("Logout").clicked() {
@@ -47,6 +48,7 @@ impl eframe::App for SpotifyApp {
             egui::CentralPanel::default().show(ctx, |ui| {
                 if let Some(name) = &state.username {                 
                     if ui.button("View Your Liked Songs").clicked() {
+                        state.liked_songs_window_pos = (300.0, 400.0);
                         state.show_tracks = true;
                         state.tracks_window_open = true;
                         let token = ACCESS_TOKEN.lock().unwrap().clone().unwrap();
@@ -56,6 +58,7 @@ impl eframe::App for SpotifyApp {
                     }
                     
                     if ui.button("Show Player").clicked() { // new button
+                        state.music_player_window_pos = (400.0, 50.0);
                         self.show_player = true;
                         state.player_window_open = true;
                     }

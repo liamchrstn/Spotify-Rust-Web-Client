@@ -29,8 +29,12 @@ pub fn show_saved_tracks_window(ctx: &Context) {
     let mut window_size = state.tracks_window_size;
     let mut tracks_window_open = state.tracks_window_open;
     
-    egui::Window::new("Liked Songs")
+    let window = egui::Window::new("Liked Songs")
         .open(&mut tracks_window_open)
+        .default_pos([
+            state.liked_songs_window_pos.0, 
+            state.liked_songs_window_pos.1
+        ])
         .default_size(window_size)
         .min_width(300.0)
         .resizable(true)
@@ -101,6 +105,11 @@ pub fn show_saved_tracks_window(ctx: &Context) {
             });
         });
         
+    if let Some(resp) = window {
+        let r = resp.response.rect;
+        state.liked_songs_window_pos = (r.min.x, r.min.y);
+    }
+
     state.tracks_window_open = tracks_window_open;
 }
 

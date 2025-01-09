@@ -21,6 +21,9 @@ pub struct AppState {
     pub settings_window_open: bool,
     pub player_name: String,  // Add this field
     pub settings_window_locked: bool,
+    pub settings_window_pos: (f32, f32), // Default position for Settings window
+    pub liked_songs_window_pos: (f32, f32), // Default position for Liked Songs window
+    pub music_player_window_pos: (f32, f32), // Default position for Music Player window
 }
 
 impl Default for AppState {
@@ -45,7 +48,26 @@ impl Default for AppState {
             settings_window_open: false,
             player_name,
             settings_window_locked: true,
+            settings_window_pos: (600.0, 40.0),    // Hardcoded defaults
+            liked_songs_window_pos: (300.0, 400.0),
+            music_player_window_pos: (400.0, 50.0),
         }
+    }
+}
+
+impl AppState {
+    pub fn reset_areas(&mut self) {
+        // Reset window-related states to default
+        self.settings_window_open = false;
+        self.tracks_window_open = false;
+        self.player_window_open = false;
+        self.tracks_window_size = (800.0, 600.0); // Default size
+        self.view_mode = ViewMode::Grid; // Default view mode
+        self.search_text.clear(); // Clear search text
+        self.settings_window_pos = (600.0, 40.0);
+        self.liked_songs_window_pos = (300.0, 400.0);
+        self.music_player_window_pos = (400.0, 50.0);
+        // Add any additional reset logic as needed
     }
 }
 
