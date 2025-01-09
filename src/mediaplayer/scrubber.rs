@@ -133,17 +133,22 @@ impl ScrubBar {
     }
 
     fn skip_button(&self, ui: &mut Ui, symbol: &str, button_size: Vec2) -> bool {
-        ui.add_sized(
+        let response = ui.add_sized(
             button_size,
             egui::Button::new(symbol)
                 .frame(false)
-        ).clicked()
+        );
+        if response.clicked() {
+            true
+        } else {
+            false
+        }
     }
 
     pub fn play_button(&self, ui: &mut Ui, playing: &mut bool, button_size: Vec2) {
         ui.horizontal(|ui| {
             if self.skip_button(ui, "⏮", button_size) {
-                // Handle previous track
+                let _ = js_sys::eval("window.skipToPrevious && window.skipToPrevious()");
             }
             
             let response = ui.add_sized(
@@ -156,7 +161,7 @@ impl ScrubBar {
             }
 
             if self.skip_button(ui, "⏭", button_size) {
-                // Handle next track
+                let _ = js_sys::eval("window.skipToNext && window.skipToNext()");
             }
         });
     }

@@ -115,53 +115,68 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
 
 
                     // Controls section
-                    strip.strip(|builder| {
-                        builder
-                            .size(Size::remainder())
-                            .size(Size::exact(40.0))
-                            .size(Size::remainder())
-                            .horizontal(|mut strip| {
-                                strip.cell(|_| ()); // Left spacing
-                                strip.cell(|ui| {
-                                    ui.vertical_centered(|ui| {
-                                        let is_playing = if let Ok(is_playing) = js_sys::eval("window.isPlaying") {
-                                            is_playing.as_bool().unwrap_or(false)
-                                        } else {
-                                            false
-                                        };
+                    strip.cell(|ui| {
+                        ui.vertical_centered(|ui| {
+                            ui.horizontal(|ui| {
+                                ui.add_space((ui.available_width() - 120.0) / 2.0); // Center the buttons
 
-                                        let is_ready = if let Ok(is_ready) = js_sys::eval("window.isReady") {
-                                            is_ready
-                                        } else {
-                                            JsValue::from(false)
-                                        };
+                                // Previous track button
+                                if ui.add_sized(
+                                    [40.0, 40.0],
+                                    egui::Button::new("⏮").frame(false)
+                                ).on_hover_text("Previous track")
+                                .clicked() {
+                                    let _ = js_sys::eval("window.skipToPrevious && window.skipToPrevious()");
+                                }
 
-                                        let button = ui.add_sized(
-                                            [40.0, 40.0],
-                                            egui::Button::new(
-                                                if is_playing {
-                                                    egui::RichText::new("⏸")
-                                                } else {
-                                                    egui::RichText::new("▶")
-                                                }
-                                            )
-                                        )
-                                        .on_hover_text(if is_ready.as_bool() != Some(true) {
-                                            "Player not ready"
-                                        } else if is_playing {
-                                            "Pause"
-                                        } else {
-                                            "Play"
-                                        });
+                                // Play/Pause button
+                                let is_playing = if let Ok(is_playing) = js_sys::eval("window.isPlaying") {
+                                    is_playing.as_bool().unwrap_or(false)
+                                } else {
+                                    false
+                                };
 
-                                        if button.clicked() {
-                                            console::log_1(&"Play button clicked in Rust UI".into());
-                                            let _ = js_sys::eval("console.log('Calling playPause'); window.playPause && window.playPause()");
+                                let is_ready = if let Ok(is_ready) = js_sys::eval("window.isReady") {
+                                    is_ready
+                                } else {
+                                    JsValue::from(false)
+                                };
+
+                                let button = ui.add_sized(
+                                    [40.0, 40.0],
+                                    egui::Button::new(
+                                        if is_playing {
+                                            egui::RichText::new("⏸")
+                                        } else {
+                                            egui::RichText::new("▶")
                                         }
-                                    });
+                                    )
+                                )
+                                .on_hover_text(if is_ready.as_bool() != Some(true) {
+                                    "Player not ready"
+                                } else if is_playing {
+                                    "Pause"
+                                } else {
+                                    "Play"
                                 });
-                                strip.cell(|_| ()); // Right spacing
+
+                                if button.clicked() {
+                                    console::log_1(&"Play button clicked in Rust UI".into());
+                                    let _ = js_sys::eval("console.log('Calling playPause'); window.playPause && window.playPause()");
+                                }
+
+                                // Next track button
+                                if ui.add_sized(
+                                    [40.0, 40.0],
+                                    egui::Button::new("⏭").frame(false)
+                                ).on_hover_text("Next track")
+                                .clicked() {
+                                    let _ = js_sys::eval("window.skipToNext && window.skipToNext()");
+                                }
+
+                                ui.add_space((ui.available_width() - 120.0) / 2.0); // Center the buttons
                             });
+                        });
                     });
 
                     
