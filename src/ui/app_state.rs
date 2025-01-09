@@ -48,9 +48,9 @@ impl Default for AppState {
             settings_window_open: false,
             player_name,
             settings_window_locked: true,
-            settings_window_pos: (600.0, 40.0),    // Hardcoded defaults
-            liked_songs_window_pos: (300.0, 400.0),
-            music_player_window_pos: (400.0, 50.0),
+            settings_window_pos: (1490.0, 30.0),    // Hardcoded defaults
+            liked_songs_window_pos: (238.0, 30.0),
+            music_player_window_pos: (1069.0, 30.0),
         }
     }
 }
@@ -64,9 +64,9 @@ impl AppState {
         self.tracks_window_size = (800.0, 600.0); // Default size
         self.view_mode = ViewMode::Grid; // Default view mode
         self.search_text.clear(); // Clear search text
-        self.settings_window_pos = (600.0, 40.0);
-        self.liked_songs_window_pos = (300.0, 400.0);
-        self.music_player_window_pos = (400.0, 50.0);
+        self.settings_window_pos = (1490.0, 30.0);
+        self.liked_songs_window_pos = (1069.0, 30.0);
+        self.music_player_window_pos = (238.0, 30.0);
         // Add any additional reset logic as needed
     }
 }
