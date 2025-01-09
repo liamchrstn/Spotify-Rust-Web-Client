@@ -25,6 +25,12 @@ async function getCurrentPlayback() {
 
         if (response.ok) {
             const data = await response.json();
+            // Add null check for data.item
+            if (!data || !data.item) {
+                console.log('No current track data available');
+                return null;
+            }
+            
             return {
                 track_window: {
                     current_track: {
@@ -181,6 +187,66 @@ async function transferPlayback(deviceId) {
     }
 }
 
+async function activateDevice(deviceId) {
+    const token = localStorage.getItem('spotify_token');
+    if (!token || !deviceId) return false;
+
+    try {
+        console.log('Activating device:', deviceId);
+        const response = await fetch('https://api.spotify.com/v1/me/player', {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                device_ids: [deviceId],
+                play: false
+            })
+        });
+        
+        // Wait for device activation
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Verify device is active
+        const verifyResponse = await fetch('https://api.spotify.com/v1/me/player', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (verifyResponse.ok) {
+            const data = await verifyResponse.json();
+            return data?.device?.id === deviceId;
+        }
+        return false;
+    } catch (error) {
+        console.error('Error activating device:', error);
+        return false;
+    }
+}
+
+async function hasActiveDevices() {
+    const devices = await getDevices();
+    return devices.some(device => device.is_active);
+}
+
+async function initializePlayback(fromPlayMusic = false) {
+    const token = localStorage.getItem('spotify_token');
+    if (!token) return;
+
+    try {
+        // Only do basic device activation on initialization
+        const deviceId = window.deviceId;
+        if (deviceId) {
+            await activateDevice(deviceId);
+        }
+    } catch (error) {
+        console.error('Error initializing playback:', error);
+        set_sdk_status('Playback Error: ' + error.message);
+    }
+}
+
 function initializePlayer() {
     const token = localStorage.getItem('spotify_token');
     if (!token) {
@@ -229,6 +295,7 @@ function initializePlayer() {
     // Ready
     player.addListener('ready', ({ device_id }) => {
         console.log('Ready with Device ID', device_id);
+        window.deviceId = device_id;  // Store device ID globally
         set_sdk_status('Ready');
         console.log('SDK status set to Ready'); // Log after setting status
     });
@@ -242,16 +309,26 @@ function initializePlayer() {
 
     // Connect to the player!
     player.connect()
-        .then(success => {
+        .then(async success => {
             if (success) {
                 console.log('Successfully connected to Spotify Player');
                 set_sdk_status('Connected');
+                window.isReady = true;  // Set ready status first
+                window.spotifyPlayer = player;
+                
+                // Wait a short moment before starting updates and initialization
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
                 startPlaybackUpdates();
-                window.isReady = true;  // Add this line to set ready status
-
+                initializePlayback();
+                
+                // Rest of the connect success code...
                 // Make the player globally accessible for seeking
                 window.spotifyPlayer = player;
                 
+                // Initialize playback when player is ready
+                initializePlayback();
+
                 // Add play/pause functionality
                 // Store device ID and enable play button when ready
                 let deviceId;
@@ -286,65 +363,19 @@ function initializePlayer() {
                             set_sdk_status('Paused');
                         }
                     } else {
-                        // Check queue first
-                        const token = localStorage.getItem('spotify_token');
-                        try {
-                            // Check queue
-                            const queueResponse = await fetch('https://api.spotify.com/v1/me/player/queue', {
-                                headers: {
-                                    'Authorization': `Bearer ${token}`
-                                }
-                            });
-                            
-                            if (queueResponse.ok) {
-                                const queueData = await queueResponse.json();
-                                if (queueData.queue && queueData.queue.length > 0) {
-                                    // Play next song in queue
-                                    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-                                        method: 'PUT',
-                                        headers: {
-                                            'Authorization': `Bearer ${token}`
-                                        }
-                                    });
-                                } else {
-                                    // If queue is empty, play from saved tracks
-                                    const savedTracksResponse = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
-                                        headers: {
-                                            'Authorization': `Bearer ${token}`
-                                        }
-                                    });
-                                    
-                                    if (savedTracksResponse.ok) {
-                                        const savedTracks = await savedTracksResponse.json();
-                                        if (savedTracks.items && savedTracks.items.length > 0) {
-                                            // Enable shuffle before playing
-                                            await fetch(`https://api.spotify.com/v1/me/player/shuffle?state=true&device_id=${deviceId}`, {
-                                                method: 'PUT',
-                                                headers: {
-                                                    'Authorization': `Bearer ${token}`
-                                                }
-                                            });
-                                            
-                                            const trackUris = savedTracks.items.map(item => item.track.uri);
-                                            await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-                                                method: 'PUT',
-                                                headers: {
-                                                    'Authorization': `Bearer ${token}`,
-                                                    'Content-Type': 'application/json'
-                                                },
-                                                body: JSON.stringify({
-                                                    uris: trackUris
-                                                })
-                                            });
-                                        }
-                                    }
-                                }
+                        // Check if there are no active devices before attempting transfer
+                        const noActiveDevices = !(await hasActiveDevices());
+                        if (noActiveDevices) {
+                            console.log('No active devices found, attempting playback transfer...');
+                            const transferred = await attemptPlaybackTransfer();
+                            if (transferred) {
+                                console.log('Playback transferred successfully');
+                                set_sdk_status('Playing');
+                                return;
                             }
-                            set_sdk_status('Playing');
-                        } catch (error) {
-                            console.error('Error managing playback:', error);
-                            set_sdk_status('Playback Error');
                         }
+                        console.log('No playback state available');
+                        set_sdk_status('No Playback');
                     }
                 };
 
@@ -375,3 +406,88 @@ window.transferPlayback = transferPlayback;
 
 // Export for use in other modules
 export { initializePlayer };
+
+async function attemptPlaybackTransfer() {
+    const deviceId = window.deviceId;
+    if (!deviceId) return false;
+
+    console.log('Attempting playback transfer...');
+    const isActive = await activateDevice(deviceId);
+    if (!isActive) {
+        console.log('Failed to activate device');
+        return false;
+    }
+
+    const token = localStorage.getItem('spotify_token');
+    if (!token) return false;
+
+    try {
+        // Try to start playback from saved tracks
+        const savedTracksResponse = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (savedTracksResponse.ok) {
+            const savedTracks = await savedTracksResponse.json();
+            if (savedTracks.items?.length > 0) {
+                const trackUris = savedTracks.items.map(item => item.track.uri);
+                await fetch('https://api.spotify.com/v1/me/player/play', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        uris: trackUris,
+                        device_id: deviceId
+                    })
+                });
+                return true;
+            }
+        }
+    } catch (error) {
+        console.error('Error during playback transfer:', error);
+    }
+    return false;
+}
+
+// Update the playPause function
+window.playPause = async () => {
+    if (!window.isReady) {
+        console.error('Player not ready yet');
+        set_sdk_status('Not Ready');
+        return;
+    }
+    
+    console.log('playPause called');
+    const state = await window.spotifyPlayer.getCurrentState();
+    console.log('Current player state:', state);
+    
+    if (!state) {
+        // Check if there are no active devices before attempting transfer
+        const noActiveDevices = !(await hasActiveDevices());
+        if (noActiveDevices) {
+            console.log('No active devices found, attempting playback transfer...');
+            const transferred = await attemptPlaybackTransfer();
+            if (transferred) {
+                console.log('Playback transferred successfully');
+                set_sdk_status('Playing');
+                return;
+            }
+        }
+        console.log('No playback state available');
+        set_sdk_status('No Playback');
+        return;
+    }
+    
+    // Normal play/pause logic for when we have a state
+    if (state.paused) {
+        await window.spotifyPlayer.resume();
+        console.log('Playback resumed');
+        set_sdk_status('Playing');
+    } else {
+        await window.spotifyPlayer.pause();
+        console.log('Playback paused');
+        set_sdk_status('Paused');
+    }
+};

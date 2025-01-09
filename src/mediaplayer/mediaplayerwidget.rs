@@ -129,11 +129,13 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                                 
                                 if ui.add_sized(
                                     [40.0, 40.0],
-                                    egui::Button::new("🔀").fill(if shuffle_state {
-                                        egui::Color32::LIGHT_BLUE
-                                    } else {
-                                        ui.style().visuals.widgets.inactive.bg_fill
-                                    })
+                                    egui::Button::new("🔀")
+                                        .frame(false)
+                                        .fill(if shuffle_state {
+                                            ui.style().visuals.widgets.active.bg_fill
+                                        } else {
+                                            egui::Color32::TRANSPARENT
+                                        })
                                 ).on_hover_text(if shuffle_state { "Shuffle On" } else { "Shuffle Off" })
                                 .clicked() {
                                     let _ = js_sys::eval("window.toggleShuffle && window.toggleShuffle()");
