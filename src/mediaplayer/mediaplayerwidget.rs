@@ -30,10 +30,19 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
         time_manager.playing = is_playing.as_bool().unwrap_or(false);
     }
 
+    let mut window_open = state.player_window_open;
+    let music_player_pos = state.music_player_window_pos;
+
+    drop(state); // Release the lock
+
     // Media player window
-    egui::Window::new("Music Player")
+    let window_response = egui::Window::new("Music Player")
         .resizable(true)
-        .open(&mut state.player_window_open)
+        .open(&mut window_open)
+        .default_pos([
+            music_player_pos.0, 
+            music_player_pos.1
+        ])
         .collapsible(true)
         .show(ctx, |ui| {
             ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
@@ -188,6 +197,15 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
             });
         });
     
+    // Re-lock to update window state if it changed
+    let mut state = APP_STATE.lock().unwrap();
+    state.player_window_open = window_open;
+
+    if let Some(resp) = window_response {
+        let rect = resp.response.rect;
+        state.music_player_window_pos = (rect.min.x, rect.min.y);
+    }
+
     // Update current time more frequently if playing
     if time_manager.playing {
         if let Ok(current_time) = js_sys::eval("window.currentPlaybackTime || 0.0") {
