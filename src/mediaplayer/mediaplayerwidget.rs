@@ -118,7 +118,26 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                     strip.cell(|ui| {
                         ui.vertical_centered(|ui| {
                             ui.horizontal(|ui| {
-                                ui.add_space((ui.available_width() - 120.0) / 2.0); // Center the buttons
+                                ui.add_space((ui.available_width() - 200.0) / 2.0); // Adjusted spacing
+
+                                // Shuffle button
+                                let shuffle_state = if let Ok(state) = js_sys::eval("window.shuffleState") {
+                                    state.as_bool().unwrap_or(false)
+                                } else {
+                                    false
+                                };
+                                
+                                if ui.add_sized(
+                                    [40.0, 40.0],
+                                    egui::Button::new("🔀").fill(if shuffle_state {
+                                        egui::Color32::LIGHT_BLUE
+                                    } else {
+                                        ui.style().visuals.widgets.inactive.bg_fill
+                                    })
+                                ).on_hover_text(if shuffle_state { "Shuffle On" } else { "Shuffle Off" })
+                                .clicked() {
+                                    let _ = js_sys::eval("window.toggleShuffle && window.toggleShuffle()");
+                                }
 
                                 // Previous track button
                                 if ui.add_sized(
@@ -174,12 +193,51 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                                     let _ = js_sys::eval("window.skipToNext && window.skipToNext()");
                                 }
 
-                                ui.add_space((ui.available_width() - 120.0) / 2.0); // Center the buttons
+                                // Device selector
+                                if ui.add_sized(
+                                    [40.0, 40.0],
+                                    egui::Button::new("🔊").frame(false)
+                                ).on_hover_text("Select device")
+                                .clicked() {
+                                    let _ = js_sys::eval("
+                                        window.getDevices().then(devices => {
+                                            window.showDeviceSelector = true;
+                                            window.availableDevices = devices;
+                                        });
+                                    ");
+                                }
+
+                                ui.add_space((ui.available_width() - 200.0) / 2.0); // Adjusted spacing
                             });
                         });
                     });
 
-                    
+                    // Add device selector popup
+                    if let Ok(show_selector) = js_sys::eval("window.showDeviceSelector") {
+                        if show_selector.as_bool().unwrap_or(false) {
+                            let devices = js_sys::eval("window.availableDevices || []").unwrap();
+                            if let Some(devices_array) = devices.dyn_ref::<js_sys::Array>() {
+                                egui::Window::new("Select Device")
+                                    .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+                                    .show(ctx, |ui| {
+                                        for i in 0..devices_array.length() {
+                                            if let Ok(device) = js_sys::Reflect::get(&devices_array.get(i), &"name".into()) {
+                                                if let Some(name) = device.as_string() {
+                                                    if ui.button(&name).clicked() {
+                                                        if let Ok(id) = js_sys::Reflect::get(&devices_array.get(i), &"id".into()) {
+                                                            let _ = js_sys::eval(&format!(
+                                                                "window.transferPlayback('{}'); window.showDeviceSelector = false;",
+                                                                id.as_string().unwrap_or_default()
+                                                            ));
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    });
+                            }
+                        }
+                    }
 
                     // Track info section
                     strip.strip(|builder| {
