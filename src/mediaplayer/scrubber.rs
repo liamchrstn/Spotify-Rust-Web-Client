@@ -61,7 +61,7 @@ impl ScrubBar {
 
             // Call the SDK's seek function
             let seek_time = *current_time as i32;
-            let _ = js_sys::eval(&format!("window.spotifyPlayer.seek({seek_time})"));
+            let _ = js_sys::eval(&format!("window.seekTo && window.seekTo({seek_time})"));
         }
 
         // Draw hover indicator

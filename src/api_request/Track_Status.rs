@@ -70,10 +70,12 @@ pub async fn toggle_shuffle(token: String) {
 
 #[wasm_bindgen]
 pub async fn get_devices() {
-    let token = if let Some(token) = get_token() {
-        token
-    } else {
-        return;
+    let token = match get_token() {
+        Some(token) => token,
+        None => {
+            web_sys::console::log_1(&"No token available for playback".into());
+            return;
+        }
     };
     let client = Client::new();
     let response = client
@@ -116,7 +118,110 @@ pub async fn transfer_playback(device_id: String) {
         .await;
 
     handle_empty_response(response, || {
-        // Success, no response body needed
+        web_sys::console::log_1(&"Playback transfer started".into());
+    }).await;
+}
+
+async fn get_user_id() -> Option<String> {
+    web_sys::console::log_1(&"Getting user ID...".into());
+    let token = match get_token() {
+        Some(token) => token,
+        None => {
+            web_sys::console::log_1(&"No token available for user profile".into());
+            return None;
+        }
+    };
+    let client = Client::new();
+    let response = client
+        .get("https://api.spotify.com/v1/me")
+        .header("Authorization", format!("Bearer {}", token))
+        .send()
+        .await
+        .ok()?;
+
+    if !response.status().is_success() {
+        web_sys::console::log_1(&"Failed to get user profile".into());
+        return None;
+    }
+
+    #[derive(serde::Deserialize)]
+    struct User {
+        id: String,
+    }
+
+    let user = match response.json::<User>().await {
+        Ok(u) => u,
+        Err(e) => {
+            web_sys::console::log_2(&"Failed to parse user profile:".into(), &e.to_string().into());
+            return None;
+        }
+    };
+    
+    web_sys::console::log_2(&"Found user ID:".into(), &user.id.clone().into());
+    Some(user.id)
+}
+
+#[wasm_bindgen]
+pub async fn start_playback(device_id: String) {
+    web_sys::console::log_2(&"Starting playback for device:".into(), &device_id.clone().into());
+
+    // Check device activation state
+    let window = web_sys::window().expect("no global window exists");
+    if let Ok(activated) = js_sys::Reflect::get(&window, &"deviceActivated".into()) {
+        if !activated.as_bool().unwrap_or(false) {
+            web_sys::console::log_1(&"Device not activated, activating first...".into());
+            activate_device(device_id.clone()).await;
+            return;
+        }
+    }
+
+    // Get user ID for collection URI
+    web_sys::console::log_1(&"Device ready, getting user collection...".into());
+    let user_id = match get_user_id().await {
+        Some(id) => id,
+        None => {
+            web_sys::console::log_1(&"Could not get user ID".into());
+            return;
+        }
+    };
+
+    // Get shuffle state
+    let window = web_sys::window().expect("no global window exists");
+    let shuffle = if let Ok(state) = js_sys::Reflect::get(&window, &"shuffleState".into()) {
+        state.as_bool().unwrap_or(false)
+    } else {
+        false
+    };
+    web_sys::console::log_2(&"Current shuffle state:".into(), &shuffle.into());
+
+    let context_uri = format!("spotify:user:{}:collection", user_id);
+    web_sys::console::log_2(&"Using context URI:".into(), &context_uri.clone().into());
+
+    // Set shuffle state before playing
+    if shuffle {
+        if let Some(token_clone) = get_token() {
+            toggle_shuffle(token_clone).await;
+        }
+    }
+    let token = if let Some(token) = get_token() {
+        token
+    } else {
+        return;
+    };
+    let client = Client::new();
+    let response = client
+        .put("https://api.spotify.com/v1/me/player/play")
+        .header("Authorization", format!("Bearer {}", token))
+        .header("Content-Type", "application/json")
+        .json(&serde_json::json!({
+            "device_id": device_id,
+            "context_uri": context_uri
+        }))
+        .send()
+        .await;
+
+    handle_empty_response(response, || {
+        web_sys::console::log_2(&"Starting playback with context:".into(), &context_uri.into());
     }).await;
 }
 
@@ -141,7 +246,9 @@ pub async fn activate_device(device_id: String) {
         .send()
         .await;
 
-    handle_empty_response(response, || {}).await;
+    handle_empty_response(response, || {
+        web_sys::console::log_1(&"Device activation started".into());
+    }).await;
 
     // Wait for device activation
     web_sys::window()
@@ -157,9 +264,16 @@ pub async fn activate_device(device_id: String) {
         .await;
 
     handle_response(verify_response, |_: PlayerStateResponse| {
-        // Device activation successful
+        web_sys::console::log_1(&"Device activation verified".into());
         let window = web_sys::window().expect("no global window exists");
         let _ = js_sys::Reflect::set(&window, &"deviceActivated".into(), &true.into());
+        
+        // Start playback
+        let device_id_clone = device_id.clone();
+        spawn_local(async move {
+            web_sys::console::log_1(&"Starting playback after device activation".into());
+            start_playback(device_id_clone).await;
+        });
     }).await;
 }
 
@@ -180,6 +294,81 @@ pub async fn has_active_devices() {
         }
     }
     let _ = js_sys::Reflect::set(&window, &"hasActiveDevices".into(), &false.into());
+}
+
+#[wasm_bindgen]
+pub async fn pause_playback() {
+    web_sys::console::log_1(&"Pausing playback via API...".into());
+    let token = match get_token() {
+        Some(token) => token,
+        None => {
+            web_sys::console::log_1(&"No token available for pause".into());
+            return;
+        }
+    };
+
+    let client = Client::new();
+    let response = client
+        .put("https://api.spotify.com/v1/me/player/pause")
+        .header("Authorization", format!("Bearer {}", token))
+        .send()
+        .await;
+
+    handle_empty_response(response, || {
+        web_sys::console::log_1(&"Playback paused via API".into());
+        let window = web_sys::window().expect("no global window exists");
+        let _ = js_sys::Reflect::set(&window, &"isPlaying".into(), &false.into());
+    }).await;
+}
+
+#[wasm_bindgen]
+pub async fn seek_playback(position_ms: i32) {
+    web_sys::console::log_2(&"Seeking via API to position:".into(), &position_ms.into());
+    let token = match get_token() {
+        Some(token) => token,
+        None => {
+            web_sys::console::log_1(&"No token available for seek".into());
+            return;
+        }
+    };
+
+    let client = Client::new();
+    let response = client
+        .put(&format!("https://api.spotify.com/v1/me/player/seek?position_ms={}", position_ms))
+        .header("Authorization", format!("Bearer {}", token))
+        .send()
+        .await;
+
+    handle_empty_response(response, || {
+        web_sys::console::log_2(&"Seek completed via API to:".into(), &position_ms.into());
+        let window = web_sys::window().expect("no global window exists");
+        let _ = js_sys::Reflect::set(&window, &"currentPlaybackTime".into(), &(position_ms as f64).into());
+    }).await;
+}
+
+#[wasm_bindgen]
+pub async fn resume_playback() {
+    web_sys::console::log_1(&"Resuming playback via API...".into());
+    let token = match get_token() {
+        Some(token) => token,
+        None => {
+            web_sys::console::log_1(&"No token available for resume".into());
+            return;
+        }
+    };
+
+    let client = Client::new();
+    let response = client
+        .put("https://api.spotify.com/v1/me/player/play")
+        .header("Authorization", format!("Bearer {}", token))
+        .send()
+        .await;
+
+    handle_empty_response(response, || {
+        web_sys::console::log_1(&"Playback resumed via API".into());
+        let window = web_sys::window().expect("no global window exists");
+        let _ = js_sys::Reflect::set(&window, &"isPlaying".into(), &true.into());
+    }).await;
 }
 
 #[wasm_bindgen]
