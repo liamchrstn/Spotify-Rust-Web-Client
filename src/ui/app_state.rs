@@ -26,6 +26,9 @@ pub struct AppState {
     pub settings_window_pos: (f32, f32), // Default position for Settings window
     pub liked_songs_window_pos: (f32, f32), // Default position for Liked Songs window
     pub music_player_window_pos: (f32, f32), // Default position for Music Player window
+    pub collage_window_open: bool,
+    pub collage_window_pos: (f32, f32), // Default position for Collage window
+    pub loading_message: String, // Status message for loading operations
 }
 
 impl Default for AppState {
@@ -77,6 +80,9 @@ impl Default for AppState {
             settings_window_pos: (1490.0, 30.0),    // Hardcoded defaults
             liked_songs_window_pos: (238.0, 30.0),
             music_player_window_pos: (1069.0, 30.0),
+            collage_window_open: false,
+            collage_window_pos: (650.0, 30.0),
+            loading_message: String::new(),
         }
     }
 }
@@ -90,6 +96,7 @@ impl AppState {
         self.settings_window_pos = (1490.0, 30.0);
         self.liked_songs_window_pos = (238.0, 30.0);
         self.music_player_window_pos = (1069.0, 30.0);
+        self.collage_window_pos = (650.0, 30.0);
         // Add any additional reset logic as needed
     }
 }

@@ -1,5 +1,4 @@
-use egui::{pos2, Color32, Id, Rangef, Rect, Rounding, Sense, Stroke, Ui, Vec2};
-use web_sys::window;
+use egui::{pos2, Color32, Id, Rect, Sense, Stroke, Ui, Vec2};
 
 pub struct ScrubBar {
     end_time: f64,
@@ -14,7 +13,6 @@ impl ScrubBar {
         let line_thickness = 4.0;
         let circle_radius = line_thickness / 2.0;
         let pointer_radius = 6.0;
-        let available_width = size.x - (pointer_radius * 2.0);
         let (scrub_response, scrub_painter) =
             ui.allocate_painter(size, Sense::union(Sense::click_and_drag(), Sense::hover()));
 
@@ -107,8 +105,8 @@ impl ScrubBar {
         ui.horizontal(|ui| {
             ui.allocate_ui_at_rect(
                 Rect::from_min_max(
-                    pos2(scrub_rect.min.x - 60.0, scrub_rect.min.y + y_offset), // Changed from -40.0
-                    pos2(scrub_rect.min.x - 20.0, scrub_rect.min.y + y_offset + text_height) // Added -20.0 offset
+                    pos2(scrub_rect.min.x - 60.0, scrub_rect.min.y + y_offset),
+                    pos2(scrub_rect.min.x - 20.0, scrub_rect.min.y + y_offset + text_height)
                 ),
                 |ui| {
                     ui.vertical_centered(|ui| {
@@ -118,8 +116,8 @@ impl ScrubBar {
             );
             ui.allocate_ui_at_rect(
                 Rect::from_min_max(
-                    pos2(scrub_rect.max.x + 20.0, scrub_rect.min.y + y_offset), // Added +20.0 offset
-                    pos2(scrub_rect.max.x + 60.0, scrub_rect.min.y + y_offset + text_height) // Changed from +40.0
+                    pos2(scrub_rect.max.x + 20.0, scrub_rect.min.y + y_offset),
+                    pos2(scrub_rect.max.x + 60.0, scrub_rect.min.y + y_offset + text_height)
                 ),
                 |ui| {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -131,72 +129,20 @@ impl ScrubBar {
             );
         });
     }
-
-    fn skip_button(&self, ui: &mut Ui, symbol: &str, button_size: Vec2) -> bool {
-        let response = ui.add_sized(
-            button_size,
-            egui::Button::new(symbol)
-                .frame(false)
-        );
-        if response.clicked() {
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn play_button(&self, ui: &mut Ui, playing: &mut bool, button_size: Vec2) {
-        ui.horizontal(|ui| {
-            if self.skip_button(ui, "⏮", button_size) {
-                let _ = js_sys::eval("window.skipToPrevious && window.skipToPrevious()");
-            }
-            
-            let response = ui.add_sized(
-                button_size,
-                egui::Button::new(if *playing { "⏸" } else { "▶" })
-                    .rounding(15.0)
-            );
-            if response.clicked() {
-                *playing = !*playing;
-            }
-
-            if self.skip_button(ui, "⏭", button_size) {
-                let _ = js_sys::eval("window.skipToNext && window.skipToNext()");
-            }
-        });
-    }
 }
 
 pub struct TimeManager {
     pub current_time: f64,
     pub end_time: f64,
     pub playing: bool,
-    start_timestamp: f64,
-    last_update: f64,
 }
 
 impl TimeManager {
     pub fn new(duration_ms: f64, _speed: f32) -> Self {
-        let performance = window()
-            .expect("no window")
-            .performance()
-            .expect("no performance");
-            
-        let now = performance.now();
         Self {
             current_time: 0.0,
             end_time: duration_ms,
             playing: false,
-            start_timestamp: now,
-            last_update: now,
-        }
-    }
-
-    pub fn update(&mut self) {
-        // Update is now handled by JavaScript polling
-        // Only update internal timestamps
-        if let Some(performance) = window().and_then(|w| w.performance()) {
-            self.last_update = performance.now();
         }
     }
 }

@@ -3,7 +3,7 @@ use crate::mediaplayer::scrubber::ScrubBar;
 use crate::mediaplayer::scrubber::TimeManager;
 use crate::ui::app_state::APP_STATE;
 use crate::api_request::imagerender::get_or_load_image;
-use crate::api_request::Track_Status::{get_current_playback, skip_to_next, skip_to_previous, toggle_shuffle, get_devices, transfer_playback};
+use crate::api_request::track_status::{skip_to_next, skip_to_previous, toggle_shuffle, get_devices, transfer_playback};
 use crate::api_request::token::get_token;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
@@ -22,7 +22,7 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
     let window_open = state.player_window_open;
 
     // Only proceed if the window is open
-    if (!window_open) {
+    if !window_open {
         return;
     }
 
@@ -127,8 +127,6 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                         });
                     });
 
-
-
                     // Controls section
                     strip.cell(|ui| {
                         ui.vertical_centered(|ui| {
@@ -223,7 +221,7 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                                 }
 
                                 // Replace device button & popup with a context menu:
-                                let menu_response = ui.menu_button("💻", |ui| {
+                                ui.menu_button("💻", |ui| {
                                     ui.set_min_width(150.0);
 
                                     // Only fetch devices when menu is first opened
@@ -264,7 +262,7 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                                 });
 
                                 // Reset first_open state when menu closes
-                                if (!ui.ctx().is_pointer_over_area()) {
+                                if !ui.ctx().is_pointer_over_area() {
                                     let _ = js_sys::eval("window.deviceMenuFirstOpen = false");
                                 }
 
@@ -349,7 +347,7 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
     }
 
     // Update current time more frequently if playing
-    if (time_manager.playing) {
+    if time_manager.playing {
         if let Ok(current_time) = js_sys::eval("window.currentPlaybackTime || 0.0") {
             if let Some(time) = current_time.as_f64() {
                 time_manager.current_time = time;
@@ -363,7 +361,7 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
     }
     
     //continuous repaint while playing
-    if (time_manager.playing) {
+    if time_manager.playing {
         ctx.request_repaint();
     }
 }

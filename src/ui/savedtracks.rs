@@ -18,14 +18,14 @@ fn draw_vlines<R>(ui: &mut Ui, _height: f32, draw_left: bool, next: impl FnOnce(
 
 pub fn show_saved_tracks_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
-    if (!state.show_tracks) {
+    if !state.show_tracks {
         return;
     }
 
     let tracks = state.saved_tracks.clone();
     let is_loading = state.is_loading;
     let total_tracks = state.total_tracks;
-    let mut view_mode = state.view_mode;
+    let view_mode = state.view_mode;
     let mut window_size = state.tracks_window_size;
     let mut tracks_window_open = state.tracks_window_open;
     
@@ -117,7 +117,7 @@ pub fn show_saved_tracks_window(ctx: &Context) {
                                                 .unwrap_or_default();
                                             
                                             wasm_bindgen_futures::spawn_local(async move {
-                                                crate::api_request::Saved_Tracks::load_more_tracks(token, false).await;
+                                                crate::api_request::saved_tracks::load_more_tracks(token, false).await;
                                             });
                                         }
                                     });
@@ -167,7 +167,7 @@ fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String, String)]) {
         if row_response.interact(egui::Sense::click()).clicked() {
             let uri = uri.clone();
             wasm_bindgen_futures::spawn_local(async move {
-                crate::api_request::Track_Status::play_track(uri).await;
+                crate::api_request::track_status::play_track(uri).await;
             });
         }
         
@@ -196,46 +196,46 @@ fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)], tot
                     body.row(100.0, |mut row| {
                         for col in 0..3 {
                             let idx = row_idx * 3 + col;
-                                            if let Some((track, artists, image_url, uri)) = tracks.get(idx) {
-                                                row.col(|ui| {
-                                                    let cell_response = ui.scope(|ui| {
-                                    draw_vlines(ui, 100.0, col > 0, |ui| {
-                                        ui.horizontal(|ui| {
-                                            // Add album art
-                                            if let Some(image) = get_or_load_image(ui.ctx(), image_url) {
-                                                ui.add(image.fit_to_exact_size([80.0, 80.0].into()));
-                                            }
-                                            ui.add_space(8.0);
-                                            ui.vertical(|ui| {
-                                                ui.add(
-                                                    egui::Label::new(
-                                                        egui::RichText::new(track)
-                                                            .size(16.0)
-                                                            .strong()
-                                                            .color(ui.visuals().strong_text_color())
-                                                            .text_style(egui::TextStyle::Body)
-                                                    ).wrap()
-                                                );
-                                                ui.add(
-                                                    egui::Label::new(
-                                                        egui::RichText::new(artists)
-                                                            .size(14.0)
-                                                            .color(ui.visuals().weak_text_color())
-                                                    ).wrap()
-                                                );
-                                                    });
-                                                    
-                                                    // Make the cell clickable
-                                                    if ui.rect_contains_pointer(ui.min_rect()) {
-                                                        ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
-                                                    }
-                                                    if ui.rect_contains_pointer(ui.min_rect()) && ui.input(|i| i.pointer.primary_clicked()) {
-                                                        let uri = uri.clone();
-                                                        wasm_bindgen_futures::spawn_local(async move {
-                                                            crate::api_request::Track_Status::play_track(uri).await;
-                                                        });
-                                                    }
+                            if let Some((track, artists, image_url, uri)) = tracks.get(idx) {
+                                row.col(|ui| {
+                                    ui.scope(|ui| {
+                                        draw_vlines(ui, 100.0, col > 0, |ui| {
+                                            ui.horizontal(|ui| {
+                                                // Add album art
+                                                if let Some(image) = get_or_load_image(ui.ctx(), image_url) {
+                                                    ui.add(image.fit_to_exact_size([80.0, 80.0].into()));
+                                                }
+                                                ui.add_space(8.0);
+                                                ui.vertical(|ui| {
+                                                    ui.add(
+                                                        egui::Label::new(
+                                                            egui::RichText::new(track)
+                                                                .size(16.0)
+                                                                .strong()
+                                                                .color(ui.visuals().strong_text_color())
+                                                                .text_style(egui::TextStyle::Body)
+                                                        ).wrap()
+                                                    );
+                                                    ui.add(
+                                                        egui::Label::new(
+                                                            egui::RichText::new(artists)
+                                                                .size(14.0)
+                                                                .color(ui.visuals().weak_text_color())
+                                                        ).wrap()
+                                                    );
                                                 });
+                                                
+                                                // Make the cell clickable
+                                                if ui.rect_contains_pointer(ui.min_rect()) {
+                                                    ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+                                                }
+                                                if ui.rect_contains_pointer(ui.min_rect()) && ui.input(|i| i.pointer.primary_clicked()) {
+                                                    let uri = uri.clone();
+                                                    wasm_bindgen_futures::spawn_local(async move {
+                                                        crate::api_request::track_status::play_track(uri).await;
+                                                    });
+                                                }
+                                            });
                                         });
                                     });
                                 });
@@ -263,7 +263,7 @@ fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)], tot
                                         .unwrap_or_default();
                                     
                                     wasm_bindgen_futures::spawn_local(async move {
-                                        crate::api_request::Saved_Tracks::load_more_tracks(token, false).await;
+                                        crate::api_request::saved_tracks::load_more_tracks(token, false).await;
                                     });
                                 }
                             });

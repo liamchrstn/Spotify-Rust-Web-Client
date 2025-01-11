@@ -3,6 +3,9 @@ name = "spotify-egui"
 version = "0.1.0"
 edition = "2021"
 
+[package.metadata]
+wasm-opt = false
+
 [lib]
 crate-type = ["cdylib"]
 name = "spotify_egui"
@@ -21,7 +24,12 @@ web-sys = { version = "0.3.76", features = [
     "Window",
     "Storage",
     "Performance",
-    "PerformanceTiming"
+    "PerformanceTiming",
+    "Blob",
+    "Url",
+    "HtmlAnchorElement",
+    "Document",
+    "Element"
 ] }
 reqwest = { version = "0.12.12", features = ["json"] }
 serde = { version = "1.0.217", features = ["derive"] }
@@ -36,4 +44,3 @@ egui-theme-switch = "0.2.3"
 egui_extras = { version = "0.30.0", features = ["all_loaders", "http", "image"] }
 image = { version = "0.25.5", features = ["jpeg", "png"] }
 egui-phosphor = { version = "0.8", features = ["thin", "light", "regular", "bold", "fill"] }
-

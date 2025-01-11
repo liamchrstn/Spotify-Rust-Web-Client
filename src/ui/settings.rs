@@ -1,13 +1,11 @@
 use egui::Context;
 use super::app_state::APP_STATE;
-use egui_theme_switch::global_theme_switch;
-use wasm_bindgen::JsValue;
-use web_sys::{window, Storage};
+use web_sys::window;
 use crate::api_request::token::SDK_STATUS;
 
 pub fn show_settings_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
-    if (!state.settings_window_open) {
+    if !state.settings_window_open {
         return;
     }
 
@@ -16,7 +14,7 @@ pub fn show_settings_window(ctx: &Context) {
     static mut ORIGINAL_NAME: String = String::new();
 
     unsafe {
-        if (!SETTINGS_INITIALIZED) {
+        if !SETTINGS_INITIALIZED {
             PLAYER_NAME = state.player_name.clone();
             ORIGINAL_NAME = state.player_name.clone();
             SETTINGS_INITIALIZED = true;
@@ -38,7 +36,7 @@ pub fn show_settings_window(ctx: &Context) {
             ui.heading("Appearance");
             ui.horizontal(|ui| {
                 ui.label("Theme:");
-                global_theme_switch(ui);
+                egui_theme_switch::global_theme_switch(ui);
             });
             
             ui.add_space(16.0);
@@ -105,7 +103,7 @@ pub fn show_settings_window(ctx: &Context) {
                 unsafe {
                     ui.label("Player Name:")
                     .on_hover_text("Rename the Spotify Player device. This is visible across all Spotify Connect devices.");
-                    let name_response = ui.text_edit_singleline(&mut PLAYER_NAME);
+                    ui.text_edit_singleline(&mut PLAYER_NAME);
                     let name_changed = PLAYER_NAME != ORIGINAL_NAME;
                     
                     let apply_button = ui.add_enabled(
@@ -185,7 +183,7 @@ pub fn show_settings_window(ctx: &Context) {
 
     state.settings_window_open = settings_open;
 
-    if (!settings_open) {
+    if !settings_open {
         unsafe {
             SETTINGS_INITIALIZED = false;
         }

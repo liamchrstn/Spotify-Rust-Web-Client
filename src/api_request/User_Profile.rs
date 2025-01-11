@@ -1,5 +1,4 @@
 use super::models::UserProfile;
-use crate::utils::{log_error, clear_token_and_redirect};
 use crate::ui::set_username;
 use reqwest::Client;
 use crate::api_request::spotify_apis::handle_response;

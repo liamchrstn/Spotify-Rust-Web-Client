@@ -2,7 +2,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
-use crate::api_request::User_Profile::fetch_user_profile;
+use crate::api_request::user_profile::fetch_user_profile;
 
 pub static ACCESS_TOKEN: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
 pub static SDK_STATUS: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
