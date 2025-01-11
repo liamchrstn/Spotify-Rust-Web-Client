@@ -115,6 +115,22 @@ function initializePlayer() {
                 // Wait a short moment before starting updates
                 await new Promise(resolve => setTimeout(resolve, 500));
                 startPlaybackUpdates();
+
+                // Add seek functionality
+                window.seekTo = async (position_ms) => {
+                    console.log('seekTo called:', position_ms);
+                    const state = await player.getCurrentState();
+                    
+                    if (state) {
+                        // Use SDK for local device
+                        await player.seek(position_ms);
+                        console.log('Seek completed via SDK');
+                    } else {
+                        // Use API for remote device
+                        console.log('Using API for remote device seek');
+                        await wasm.seek_playback(position_ms);
+                    }
+                };
                 
                 // Add play/pause functionality
                 window.playPause = async () => {
@@ -129,31 +145,29 @@ function initializePlayer() {
                     console.log('Current player state:', state);
                     
                     if (state) {
+                        // Use SDK for local device
                         if (state.paused) {
                             await player.resume();
-                            console.log('Playback resumed');
+                            console.log('Playback resumed via SDK');
                             set_sdk_status('Playing');
                         } else {
                             await player.pause();
-                            console.log('Playback paused');
+                            console.log('Playback paused via SDK');
                             set_sdk_status('Paused');
                         }
                     } else {
-                        // Check if there are no active devices
-                        await wasm.has_active_devices();
-                        if (!window.hasActiveDevices) {
-                            console.log('No active devices found, attempting device activation...');
-                            if (window.deviceId) {
-                                await wasm.activate_device(window.deviceId);
-                                if (window.deviceActivated) {
-                                    console.log('Device activated successfully');
-                                    set_sdk_status('Ready');
-                                    return;
-                                }
-                            }
+                        // Use API for remote device
+                        console.log('Using API for remote device control');
+                        const isPlaying = window.isPlaying;
+                        if (isPlaying) {
+                            await wasm.pause_playback();
+                            console.log('Playback paused via API');
+                            set_sdk_status('Paused');
+                        } else {
+                            await wasm.resume_playback();
+                            console.log('Playback resumed via API');
+                            set_sdk_status('Playing');
                         }
-                        console.log('No playback state available');
-                        set_sdk_status('No Playback');
                     }
                 };
             } else {
