@@ -11,8 +11,20 @@ use js_sys;
 use web_sys::console;
 use egui_extras::{StripBuilder, Size};
 
+#[wasm_bindgen]
+pub fn is_player_window_open() -> bool {
+    let state = APP_STATE.lock().unwrap();
+    state.player_window_open
+}
+
 pub fn show_mediaplayer_window(ctx: &egui::Context) {
     let mut state = APP_STATE.lock().unwrap();
+    let window_open = state.player_window_open;
+
+    // Only proceed if the window is open
+    if (!window_open) {
+        return;
+    }
 
     // Get duration from JavaScript
     let duration = js_sys::eval("window.totalDuration || 100000.0")
@@ -252,7 +264,7 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                                 });
 
                                 // Reset first_open state when menu closes
-                                if !ui.ctx().is_pointer_over_area() {
+                                if (!ui.ctx().is_pointer_over_area()) {
                                     let _ = js_sys::eval("window.deviceMenuFirstOpen = false");
                                 }
 
@@ -337,7 +349,7 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
     }
 
     // Update current time more frequently if playing
-    if time_manager.playing {
+    if (time_manager.playing) {
         if let Ok(current_time) = js_sys::eval("window.currentPlaybackTime || 0.0") {
             if let Some(time) = current_time.as_f64() {
                 time_manager.current_time = time;
@@ -351,7 +363,7 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
     }
     
     //continuous repaint while playing
-    if time_manager.playing {
+    if (time_manager.playing) {
         ctx.request_repaint();
     }
 }

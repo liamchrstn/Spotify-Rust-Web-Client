@@ -18,10 +18,32 @@ let lastUpdateSuccess = true;
 const MIN_UPDATE_INTERVAL = 1000; // Minimum 1 second between updates
 const RETRY_INTERVAL = 5000; // Wait 5 seconds after a failure before retrying
 
+let lastTickTime = Date.now();
+
+function updateLocalPlaybackTime() {
+    if (window.isPlaying) {
+        const now = Date.now();
+        const elapsed = now - lastTickTime;
+        lastTickTime = now;
+        
+        // Update local time
+        window.currentPlaybackTime = (window.currentPlaybackTime || 0) + elapsed;
+        
+        // Loop back if we reach the end
+        if (window.currentPlaybackTime > window.totalDuration) {
+            window.currentPlaybackTime = 0;
+        }
+    }
+}
+
 function startPlaybackUpdates() {
     // Update immediately
     updatePlaybackState();
-    // Then update periodically
+    
+    // Update local time more frequently
+    setInterval(updateLocalPlaybackTime, 50); // 50ms for smooth updates
+    
+    // Check for remote updates periodically
     setInterval(checkAndUpdatePlayback, 200);
 }
 
@@ -39,9 +61,30 @@ function checkAndUpdatePlayback() {
 
 async function updatePlaybackState() {
     try {
+        const isPlayerWindowOpen = await wasm.is_player_window_open();
+        if (!isPlayerWindowOpen) {
+            return;
+        }
+
+        // Check if we're the active device
+        const player = window.spotifyPlayer;
+        if (player) {
+            const state = await player.getCurrentState();
+            if (state) {
+                // We're the active device, no need to make API call
+                console.log('Using SDK state for active device');
+                return;
+            }
+        }
+
+        // Only make API call if we're not the active device
+        console.log('Falling back to API for remote device state');
         lastUpdateTime = Date.now();
         await wasm.get_current_playback();
         lastUpdateSuccess = true;
+        
+        // Reset tick timer whenever we get a server update
+        lastTickTime = Date.now();
     } catch (error) {
         console.error('Error updating playback state:', error);
         lastUpdateSuccess = false;
@@ -87,7 +130,18 @@ function initializePlayer() {
     // Playback status updates
     player.addListener('player_state_changed', state => { 
         console.log('Player state changed:', state);
-        window.currentPlayerState = state;
+        if (state) {
+            // Update all window state from SDK state
+            window.currentPlayerState = state;
+            window.currentPlaybackTime = state.position;
+            window.totalDuration = state.duration;
+            window.isPlaying = !state.paused;
+            window.shuffleState = state.shuffle;
+            // Reset the update timer since we just got fresh state
+            lastUpdateTime = Date.now();
+            lastTickTime = Date.now(); // Reset tick timer on state change
+            lastUpdateSuccess = true;
+        }
     });
 
     // Ready
