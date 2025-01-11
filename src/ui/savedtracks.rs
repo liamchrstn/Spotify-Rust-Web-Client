@@ -97,12 +97,36 @@ pub fn show_saved_tracks_window(ctx: &Context) {
                 })
                 .collect();
 
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                match view_mode {
-                    ViewMode::List => show_list_view(ui, &filtered_tracks),
-                    ViewMode::Grid => show_grid_view(ui, &filtered_tracks),
-                }
-            });
+            match view_mode {
+                ViewMode::List => {
+                    egui::ScrollArea::vertical()
+                        .stick_to_bottom(true)
+                        .show(ui, |ui| {
+                            show_list_view(ui, &filtered_tracks);
+
+                            // Add Load More button only at the bottom after showing all tracks
+                            if let Some(total) = total_tracks {
+                                if filtered_tracks.len() >= state.saved_tracks.len() && state.loaded_tracks_count < total {
+                                    ui.add_space(16.0);
+                                    ui.horizontal(|ui| {
+                                        ui.add_space(ui.available_width() / 2.0 - 50.0); // Center the button
+                                        if ui.button("Load More").clicked() {
+                                            let token = web_sys::window()
+                                                .and_then(|window| window.local_storage().ok().flatten())
+                                                .and_then(|storage| storage.get_item("spotify_token").ok().flatten())
+                                                .unwrap_or_default();
+                                            
+                                            wasm_bindgen_futures::spawn_local(async move {
+                                                crate::api_request::Saved_Tracks::load_more_tracks(token, false).await;
+                                            });
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                },
+                ViewMode::Grid => show_grid_view(ui, &filtered_tracks, total_tracks, state.saved_tracks.len(), state.loaded_tracks_count),
+            }
         });
         
     if let Some(resp) = window {
@@ -152,7 +176,7 @@ fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String, String)]) {
     }
 }
 
-fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)]) {
+fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)], total_tracks: Option<i32>, saved_tracks_len: usize, loaded_tracks_count: i32) {
     let available_width = ui.available_width();
     let column_width = (available_width / 3.0).max(100.0) - 10.0; // Add padding
     
@@ -220,6 +244,30 @@ fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)]) {
                             }
                         }
                     });
+                }
+
+                // Add Load More button only after the last row if we have more tracks to load
+                if let Some(total) = total_tracks {
+                    if tracks.len() >= saved_tracks_len && loaded_tracks_count < total {
+                        body.row(50.0, |mut row| {
+                            // Use all three columns for the button
+                            row.col(|_| {});  // Empty first column
+                            row.col(|ui| {
+                                // Center the button in the middle column
+                                if ui.button("Load More").clicked() {
+                                    let token = web_sys::window()
+                                        .and_then(|window| window.local_storage().ok().flatten())
+                                        .and_then(|storage| storage.get_item("spotify_token").ok().flatten())
+                                        .unwrap_or_default();
+                                    
+                                    wasm_bindgen_futures::spawn_local(async move {
+                                        crate::api_request::Saved_Tracks::load_more_tracks(token, false).await;
+                                    });
+                                }
+                            });
+                            row.col(|_| {});  // Empty third column
+                        });
+                    }
                 }
             });
     });
