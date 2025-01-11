@@ -30,28 +30,50 @@ pub struct AppState {
 
 impl Default for AppState {
     fn default() -> Self {
-        // Try to get the stored player name from localStorage
-        let player_name = web_sys::window()
-            .and_then(|window| window.local_storage().ok().flatten())
+        // Get localStorage instance
+        let local_storage = web_sys::window()
+            .and_then(|window| window.local_storage().ok().flatten());
+
+        // Load settings from localStorage with defaults
+        let player_name = local_storage
+            .as_ref()
             .and_then(|storage| storage.get_item("player_name").ok().flatten())
             .unwrap_or_else(|| "Web Playback SDK Quick Start Player".to_string());
+
+        let tracks_per_load = local_storage
+            .as_ref()
+            .and_then(|storage| storage.get_item("tracks_per_load").ok().flatten())
+            .and_then(|val| val.parse().ok())
+            .unwrap_or(50);
+
+        let settings_window_locked = local_storage
+            .as_ref()
+            .and_then(|storage| storage.get_item("settings_window_locked").ok().flatten())
+            .and_then(|val| val.parse().ok())
+            .unwrap_or(true);
+
+        let view_mode = local_storage
+            .as_ref()
+            .and_then(|storage| storage.get_item("view_mode").ok().flatten())
+            .map(|val| if val == "List" { ViewMode::List } else { ViewMode::Grid })
+            .unwrap_or(ViewMode::Grid);
 
         AppState { 
             username: None,
             saved_tracks: Vec::new(),
-            tracks_per_load: 50,
+            tracks_per_load,
             loaded_tracks_count: 0,
             show_tracks: false,
             tracks_window_open: false,
-            player_window_open: false,  // Added missing field
-            tracks_window_size: (800.0, 600.0), // Increased window size
+            player_window_open: false,
+            tracks_window_size: (800.0, 600.0),
             total_tracks: None,
-            is_loading: false,  // Initialize loading state
-            view_mode: ViewMode::Grid,  // Changed from List to Grid
+            is_loading: false,
+            view_mode,
             search_text: String::new(),
             settings_window_open: false,
             player_name,
-            settings_window_locked: true,
+            settings_window_locked,
             settings_window_pos: (1490.0, 30.0),    // Hardcoded defaults
             liked_songs_window_pos: (238.0, 30.0),
             music_player_window_pos: (1069.0, 30.0),
