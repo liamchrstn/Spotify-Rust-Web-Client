@@ -152,6 +152,7 @@ fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String, String)]) {
                         .size(16.0)
                         .strong()
                         .color(ui.visuals().strong_text_color())
+                        .text_style(egui::TextStyle::Body)
                 ).wrap());
                 
                 ui.add(egui::Label::new(
@@ -212,6 +213,7 @@ fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)], tot
                                                             .size(16.0)
                                                             .strong()
                                                             .color(ui.visuals().strong_text_color())
+                                                            .text_style(egui::TextStyle::Body)
                                                     ).wrap()
                                                 );
                                                 ui.add(

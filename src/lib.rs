@@ -36,8 +36,24 @@ pub async fn start() -> Result<(), JsValue> {
             canvas_element,
             web_options,
             Box::new(|cc| {
-                // Configure fonts
+                // Configure fonts with Unicode support
                 let mut fonts = egui::FontDefinitions::default();
+                
+                // Add support for Asian characters
+                fonts.font_data.insert(
+                    "noto_sans".to_owned(),
+                    egui::FontData::from_static(include_bytes!("../assets/NotoSansCJKjp-Regular.otf")).into()
+                );
+                
+                // Add Noto Sans as primary font for all text styles
+                fonts.families.get_mut(&egui::FontFamily::Proportional)
+                    .unwrap()
+                    .insert(0, "noto_sans".to_owned());
+                
+                fonts.families.get_mut(&egui::FontFamily::Monospace)
+                    .unwrap()
+                    .insert(0, "noto_sans".to_owned());
+
                 egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Bold);
                 cc.egui_ctx.set_fonts(fonts);
                 
