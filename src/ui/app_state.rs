@@ -9,7 +9,7 @@ pub enum ViewMode {
 
 pub struct AppState {
     pub username: Option<String>,
-    pub saved_tracks: Vec<(String, String, String)>, // (track name, artist name, image url)
+    pub saved_tracks: Vec<(String, String, String, String)>, // (track name, artist name, image url, uri)
     pub show_tracks: bool,
     pub tracks_window_open: bool,
     pub player_window_open: bool, 

@@ -11,6 +11,7 @@ pub struct Track {
     pub artists: Vec<Artist>,
     pub album: Album,
     pub duration_ms: i32,
+    pub uri: String,  // Spotify URI for the track (e.g. "spotify:track:...")
 }
 
 #[derive(Deserialize)]
@@ -43,7 +44,7 @@ pub struct UserProfile {
 
 #[derive(Serialize, Deserialize)]
 pub struct StoredTracks {
-    pub tracks: Vec<(String, String, String)>, // (track name, artist name, image url)
+    pub tracks: Vec<(String, String, String, String)>, // (track name, artist name, image url, uri)
     pub total: i32,
     pub timestamp: u64,
 }
