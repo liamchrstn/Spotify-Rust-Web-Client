@@ -2,11 +2,14 @@ use eframe::egui;
 use crate::mediaplayer::scrubber::ScrubBar;
 use crate::mediaplayer::scrubber::TimeManager;
 use crate::ui::app_state::APP_STATE;
-use crate::api_request::imagerender::get_or_load_image; // Add this import
+use crate::api_request::imagerender::get_or_load_image;
+use crate::api_request::Track_Status::{get_current_playback, skip_to_next, skip_to_previous, toggle_shuffle, get_devices, transfer_playback};
+use crate::api_request::token::get_token;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::spawn_local;
 use js_sys;
 use web_sys::console;
-use egui_extras::{StripBuilder, Size}; // Add these imports
+use egui_extras::{StripBuilder, Size};
 
 pub fn show_mediaplayer_window(ctx: &egui::Context) {
     let mut state = APP_STATE.lock().unwrap();
@@ -19,14 +22,14 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
 
     let mut time_manager = TimeManager::new(duration, 1.0);
 
-    // Update current time from JavaScript
+    // Update current time from window state (updated by JavaScript)
     if let Ok(current_time) = js_sys::eval("window.currentPlaybackTime || 0.0") {
         if let Some(time) = current_time.as_f64() {
             time_manager.current_time = time;
         }
     }
 
-    // Update playing state from JavaScript
+    // Update playing state from window state (set by get_current_playback)
     if let Ok(is_playing) = js_sys::eval("window.isPlaying || false") {
         time_manager.playing = is_playing.as_bool().unwrap_or(false);
     }
@@ -138,7 +141,11 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                                         })
                                 ).on_hover_text(if shuffle_state { "Shuffle On" } else { "Shuffle Off" })
                                 .clicked() {
-                                    let _ = js_sys::eval("window.toggleShuffle && window.toggleShuffle()");
+                                    if let Some(token) = get_token() {
+                                        spawn_local(async move {
+                                            toggle_shuffle(token).await;
+                                        });
+                                    }
                                 }
 
                                 // Previous track button
@@ -147,7 +154,11 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                                     egui::Button::new("⏮").frame(false)
                                 ).on_hover_text("Previous track")
                                 .clicked() {
-                                    let _ = js_sys::eval("window.skipToPrevious && window.skipToPrevious()");
+                                    if let Some(token) = get_token() {
+                                        spawn_local(async move {
+                                            skip_to_previous(token).await;
+                                        });
+                                    }
                                 }
 
                                 // Play/Pause button
@@ -192,7 +203,11 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                                     egui::Button::new("⏭").frame(false)
                                 ).on_hover_text("Next track")
                                 .clicked() {
-                                    let _ = js_sys::eval("window.skipToNext && window.skipToNext()");
+                                    if let Some(token) = get_token() {
+                                        spawn_local(async move {
+                                            skip_to_next(token).await;
+                                        });
+                                    }
                                 }
 
                                 // Device selector
@@ -201,12 +216,11 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                                     egui::Button::new("🔊").frame(false)
                                 ).on_hover_text("Select device")
                                 .clicked() {
-                                    let _ = js_sys::eval("
-                                        window.getDevices().then(devices => {
-                                            window.showDeviceSelector = true;
-                                            window.availableDevices = devices;
-                                        });
-                                    ");
+                                    spawn_local(async {
+                                        get_devices().await;
+                                        let window = web_sys::window().expect("no global window exists");
+                                        let _ = js_sys::Reflect::set(&window, &"showDeviceSelector".into(), &true.into());
+                                    });
                                 }
 
                                 ui.add_space((ui.available_width() - 200.0) / 2.0); // Adjusted spacing
@@ -227,10 +241,12 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                                                 if let Some(name) = device.as_string() {
                                                     if ui.button(&name).clicked() {
                                                         if let Ok(id) = js_sys::Reflect::get(&devices_array.get(i), &"id".into()) {
-                                                            let _ = js_sys::eval(&format!(
-                                                                "window.transferPlayback('{}'); window.showDeviceSelector = false;",
-                                                                id.as_string().unwrap_or_default()
-                                                            ));
+                                            let device_id = id.as_string().unwrap_or_default();
+                                            spawn_local(async move {
+                                                transfer_playback(device_id).await;
+                                                let window = web_sys::window().expect("no global window exists");
+                                                let _ = js_sys::Reflect::set(&window, &"showDeviceSelector".into(), &false.into());
+                                            });
                                                         }
                                                     }
                                                 }

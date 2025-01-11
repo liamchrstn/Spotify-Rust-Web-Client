@@ -21,3 +21,7 @@ pub fn set_sdk_status(status: String) {
     let mut sdk_status = SDK_STATUS.lock().unwrap();
     *sdk_status = Some(status);
 }
+
+pub fn get_token() -> Option<String> {
+    ACCESS_TOKEN.lock().unwrap().clone()
+}
