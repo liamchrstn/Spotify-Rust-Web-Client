@@ -390,21 +390,42 @@ pub async fn play_track(uri: String) {
         }
     }
 
-    // Create client and attempt to play track
+    // Get user ID for collection URI
+    let user_id = match get_user_id().await {
+        Some(id) => id,
+        None => {
+            web_sys::console::log_1(&"Could not get user ID".into());
+            return;
+        }
+    };
+
+    // Find track position in saved tracks
+    let offset = {
+        let state = crate::ui::APP_STATE.lock().unwrap();
+        state.saved_tracks.iter()
+            .position(|(_, _, _, track_uri)| track_uri == &uri)
+            .unwrap_or(0)
+    };
+
+    // Create client and attempt to play track with context
     let client = Client::new();
-    web_sys::console::log_1(&"Sending play request...".into());
+    web_sys::console::log_1(&"Sending play request with context...".into());
+    let context_uri = format!("spotify:user:{}:collection", user_id);
     let response = client
         .put("https://api.spotify.com/v1/me/player/play")
         .header("Authorization", format!("Bearer {}", token))
         .header("Content-Type", "application/json")
         .json(&serde_json::json!({
-            "uris": [uri]
+            "context_uri": context_uri,
+            "offset": {
+                "position": offset
+            }
         }))
         .send()
         .await;
 
     handle_empty_response(response, || {
-        web_sys::console::log_1(&"Track playback started".into());
+        web_sys::console::log_1(&"Track playback started with context".into());
         let window = web_sys::window().expect("no global window exists");
         let _ = js_sys::Reflect::set(&window, &"isPlaying".into(), &true.into());
     }).await;
