@@ -45,7 +45,7 @@ pub async fn fetch_saved_tracks(token: String) {
             .await;
 
         handle_response(response, |tracks: SavedTracksResponse| {
-            let track_info: Vec<(String, String, String)> = tracks.items
+            let track_info: Vec<(String, String, String, String)> = tracks.items
                 .into_iter()
                 .map(|item| {
                     let artists = item.track.artists
@@ -60,7 +60,7 @@ pub async fn fetch_saved_tracks(token: String) {
                         .map(|img| img.url.clone())
                         .unwrap_or_default();
 
-                    (item.track.name, artists, image_url)
+                    (item.track.name, artists, image_url, item.track.uri)
                 })
                 .collect();
             

@@ -5,7 +5,7 @@ use crate::api_request::models::StoredTracks;
 const TRACKS_KEY: &str = "spotify_tracks";
 const CACHE_DURATION: u64 = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
-pub fn save_tracks(tracks: &Vec<(String, String, String)>, total: i32) -> Result<(), String> {
+pub fn save_tracks(tracks: &Vec<(String, String, String, String)>, total: i32) -> Result<(), String> {
     if let Some(storage) = get_local_storage() {
         let stored_tracks = StoredTracks {
             tracks: tracks.clone(),

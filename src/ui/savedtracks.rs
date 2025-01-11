@@ -90,7 +90,7 @@ pub fn show_saved_tracks_window(ctx: &Context) {
 
             // Filter tracks based on search text
             let filtered_tracks: Vec<_> = tracks.iter()
-                .filter(|(track, artists, _)| {
+                .filter(|(track, artists, _, _)| {
                     let search_lower = state.search_text.to_lowercase();
                     track.to_lowercase().contains(&search_lower) || 
                     artists.to_lowercase().contains(&search_lower)
@@ -114,9 +114,9 @@ pub fn show_saved_tracks_window(ctx: &Context) {
     state.tracks_window_open = tracks_window_open;
 }
 
-fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String)]) {
-    for (track, artists, image_url) in tracks {
-        ui.horizontal(|ui| {
+fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String, String)]) {
+    for (track, artists, image_url, uri) in tracks {
+        let row_response = ui.horizontal(|ui| {
             // Add album art
             if let Some(image) = get_or_load_image(ui.ctx(), image_url) {
                 ui.add(image.fit_to_exact_size([40.0, 40.0].into()));
@@ -136,14 +136,23 @@ fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String)]) {
                         .color(ui.visuals().weak_text_color())
                 ).wrap());
             });
-        });
+        }).response;
+
+        // Make the row clickable
+        if row_response.interact(egui::Sense::click()).clicked() {
+            let uri = uri.clone();
+            wasm_bindgen_futures::spawn_local(async move {
+                crate::api_request::Track_Status::play_track(uri).await;
+            });
+        }
+        
         ui.add_space(4.0);
         ui.separator();
         ui.add_space(4.0);
     }
 }
 
-fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String)]) {
+fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)]) {
     let available_width = ui.available_width();
     let column_width = (available_width / 3.0).max(100.0) - 10.0; // Add padding
     
@@ -162,8 +171,9 @@ fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String)]) {
                     body.row(100.0, |mut row| {
                         for col in 0..3 {
                             let idx = row_idx * 3 + col;
-                            if let Some((track, artists, image_url)) = tracks.get(idx) {
-                                row.col(|ui| {
+                                            if let Some((track, artists, image_url, uri)) = tracks.get(idx) {
+                                                row.col(|ui| {
+                                                    let cell_response = ui.scope(|ui| {
                                     draw_vlines(ui, 100.0, col > 0, |ui| {
                                         ui.horizontal(|ui| {
                                             // Add album art
@@ -187,7 +197,19 @@ fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String)]) {
                                                             .color(ui.visuals().weak_text_color())
                                                     ).wrap()
                                                 );
-                                            });
+                                                    });
+                                                    
+                                                    // Make the cell clickable
+                                                    if ui.rect_contains_pointer(ui.min_rect()) {
+                                                        ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+                                                    }
+                                                    if ui.rect_contains_pointer(ui.min_rect()) && ui.input(|i| i.pointer.primary_clicked()) {
+                                                        let uri = uri.clone();
+                                                        wasm_bindgen_futures::spawn_local(async move {
+                                                            crate::api_request::Track_Status::play_track(uri).await;
+                                                        });
+                                                    }
+                                                });
                                         });
                                     });
                                 });
