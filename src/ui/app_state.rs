@@ -10,6 +10,8 @@ pub enum ViewMode {
 pub struct AppState {
     pub username: Option<String>,
     pub saved_tracks: Vec<(String, String, String, String)>, // (track name, artist name, image url, uri)
+    pub tracks_per_load: i32, // Number of tracks to load at a time
+    pub loaded_tracks_count: i32, // Number of tracks currently loaded
     pub show_tracks: bool,
     pub tracks_window_open: bool,
     pub player_window_open: bool, 
@@ -37,6 +39,8 @@ impl Default for AppState {
         AppState { 
             username: None,
             saved_tracks: Vec::new(),
+            tracks_per_load: 50,
+            loaded_tracks_count: 0,
             show_tracks: false,
             tracks_window_open: false,
             player_window_open: false,  // Added missing field

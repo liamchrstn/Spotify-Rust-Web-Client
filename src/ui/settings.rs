@@ -68,6 +68,23 @@ pub fn show_settings_window(ctx: &Context) {
             }
             
             ui.add_space(16.0);
+            ui.heading("Tracks Loading");
+            ui.horizontal(|ui| {
+                ui.label("Tracks per load:")
+                    .on_hover_text("Number of tracks to load at a time");
+                let mut tracks_per_load = state.tracks_per_load;
+                ui.add(egui::Slider::new(&mut tracks_per_load, 10..=1000).step_by(10.0)
+                    .custom_formatter(|n, _| {
+                        if n >= 1000.0 { "Unlimited".to_string() }
+                        else { format!("{}", n as i32) }
+                    }))
+                    .on_hover_text("Choose how many tracks to load at once. Values above 50 will make multiple requests to load tracks faster. 'Unlimited' will load all tracks.");
+                if tracks_per_load != state.tracks_per_load {
+                    state.tracks_per_load = tracks_per_load;
+                }
+            });
+
+            ui.add_space(16.0);
             ui.heading("Web Player Settings");
             ui.horizontal(|ui| {
                 unsafe {
