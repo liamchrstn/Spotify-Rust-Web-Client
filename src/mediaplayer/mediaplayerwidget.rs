@@ -210,52 +210,56 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                                     }
                                 }
 
-                                // Device selector
-                                if ui.add_sized(
-                                    [40.0, 40.0],
-                                    egui::Button::new("🔊").frame(false)
-                                ).on_hover_text("Select device")
-                                .clicked() {
-                                    spawn_local(async {
-                                        get_devices().await;
-                                        let window = web_sys::window().expect("no global window exists");
-                                        let _ = js_sys::Reflect::set(&window, &"showDeviceSelector".into(), &true.into());
-                                    });
+                                // Replace device button & popup with a context menu:
+                                let menu_response = ui.menu_button("💻", |ui| {
+                                    ui.set_min_width(150.0);
+
+                                    // Only fetch devices when menu is first opened
+                                    if let Ok(first_open) = js_sys::eval("
+                                        if (!window.deviceMenuFirstOpen) {
+                                            window.deviceMenuFirstOpen = true;
+                                            true
+                                        } else {
+                                            false
+                                        }
+                                    ") {
+                                        if first_open.as_bool().unwrap_or(false) {
+                                            spawn_local(async {
+                                                get_devices().await;
+                                            });
+                                        }
+                                    }
+
+                                    // Use cached devices from previous fetch
+                                    let devices = js_sys::eval("window.availableDevices || []").unwrap();
+                                    if let Some(devices_array) = devices.dyn_ref::<js_sys::Array>() {
+                                        for i in 0..devices_array.length() {
+                                            if let Ok(device) = js_sys::Reflect::get(&devices_array.get(i), &"name".into()) {
+                                                if let Some(name) = device.as_string() {
+                                                    if ui.button(&name).clicked() {
+                                                        if let Ok(id) = js_sys::Reflect::get(&devices_array.get(i), &"id".into()) {
+                                                            let device_id = id.as_string().unwrap_or_default();
+                                                            spawn_local(async move {
+                                                                transfer_playback(device_id).await;
+                                                            });
+                                                        }
+                                                        ui.close_menu();
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+
+                                // Reset first_open state when menu closes
+                                if !ui.ctx().is_pointer_over_area() {
+                                    let _ = js_sys::eval("window.deviceMenuFirstOpen = false");
                                 }
 
                                 ui.add_space((ui.available_width() - 200.0) / 2.0); // Adjusted spacing
                             });
                         });
                     });
-
-                    // Add device selector popup
-                    if let Ok(show_selector) = js_sys::eval("window.showDeviceSelector") {
-                        if show_selector.as_bool().unwrap_or(false) {
-                            let devices = js_sys::eval("window.availableDevices || []").unwrap();
-                            if let Some(devices_array) = devices.dyn_ref::<js_sys::Array>() {
-                                egui::Window::new("Select Device")
-                                    .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
-                                    .show(ctx, |ui| {
-                                        for i in 0..devices_array.length() {
-                                            if let Ok(device) = js_sys::Reflect::get(&devices_array.get(i), &"name".into()) {
-                                                if let Some(name) = device.as_string() {
-                                                    if ui.button(&name).clicked() {
-                                                        if let Ok(id) = js_sys::Reflect::get(&devices_array.get(i), &"id".into()) {
-                                            let device_id = id.as_string().unwrap_or_default();
-                                            spawn_local(async move {
-                                                transfer_playback(device_id).await;
-                                                let window = web_sys::window().expect("no global window exists");
-                                                let _ = js_sys::Reflect::set(&window, &"showDeviceSelector".into(), &false.into());
-                                            });
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    });
-                            }
-                        }
-                    }
 
                     // Track info section
                     strip.strip(|builder| {
