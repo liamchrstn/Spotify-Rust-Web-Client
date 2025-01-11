@@ -7,6 +7,7 @@ use egui_theme_switch::global_theme_switch;
 use super::savedtracks::show_saved_tracks_window;
 use wasm_bindgen::JsValue; // Add this import
 use web_sys::console;       // Add this import
+use wasm_bindgen::JsCast;  // Add JsCast trait for dyn_ref
 
 #[derive(Default)]
 pub struct SpotifyApp {
@@ -58,6 +59,43 @@ impl eframe::App for SpotifyApp {
                     if ui.button("Show Player").clicked() { // new button
                         self.show_player = true;
                         state.player_window_open = true;
+                        
+                        // Check for active devices on player show
+                        use crate::api_request::Track_Status::{has_active_devices, get_devices};
+                        spawn_local(async {
+                            // First check for active devices
+                            has_active_devices().await;
+                            
+                            // Wait a bit for the check to complete
+                            gloo_timers::future::TimeoutFuture::new(500).await;
+                            
+                            // Get window state to check result
+                            if let Some(window) = web_sys::window() {
+                                if let Ok(has_active) = js_sys::Reflect::get(&window, &"hasActiveDevices".into()) {
+                                    if !has_active.as_bool().unwrap_or(true) {
+                                        // No active devices, get available devices
+                                        get_devices().await;
+                                        
+                                        // Wait for devices to be fetched
+                                        gloo_timers::future::TimeoutFuture::new(500).await;
+                                        
+                                        // Get first available device and activate it
+                                        if let Ok(devices) = js_sys::Reflect::get(&window, &"availableDevices".into()) {
+                                            if let Some(devices_array) = devices.dyn_ref::<js_sys::Array>() {
+                                                if devices_array.length() > 0 {
+                                                    if let Ok(device) = js_sys::Reflect::get(&devices_array.get(0), &"id".into()) {
+                                                        if let Some(device_id) = device.as_string() {
+                                                            use crate::api_request::Track_Status::activate_device;
+                                                            activate_device(device_id).await;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
                     }
                 } else {
                     ui.vertical_centered(|ui| {
