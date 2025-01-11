@@ -1,11 +1,37 @@
 use super::app_state::APP_STATE;
 use crate::image_processing::user_interface::get_color_shift;
 use crate::image_processing::collage::create_collage;
-use egui::Context;
+use egui::{Context, ColorImage, TextureHandle, load::SizedTexture};
 use wasm_bindgen_futures::spawn_local;
 use web_sys::{Blob, Url};
 use wasm_bindgen::JsCast;
 use std::io::Cursor;
+use std::sync::Arc;
+
+fn download_collage(image_data: &[u8]) {
+    // Create a Blob from the image data
+    let array = js_sys::Uint8Array::from(image_data);
+    let blob_parts = js_sys::Array::new();
+    blob_parts.push(&array);
+    
+    if let Ok(blob) = Blob::new_with_u8_array_sequence(&blob_parts) {
+        if let Ok(url) = Url::create_object_url_with_blob(&blob) {
+            if let Some(window) = web_sys::window() {
+                if let Some(document) = window.document() {
+                    if let Some(link) = document.create_element("a").ok() {
+                        let link = link.dyn_into::<web_sys::HtmlAnchorElement>().unwrap();
+                        link.set_href(&url);
+                        link.set_download("collage.png");
+                        link.click();
+                        
+                        // Clean up
+                        let _ = Url::revoke_object_url(&url);
+                    }
+                }
+            }
+        }
+    }
+}
 
 pub fn show_collage_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
@@ -19,7 +45,34 @@ pub fn show_collage_window(ctx: &Context) {
         .show(ctx, |ui| {
             ui.label("Create a collage from your liked songs' album artwork");
             
-            if ui.button("Generate Collage").clicked() {
+            // Show preview if we have a generated image
+            if let Some(image_data) = &state.collage_image {
+                if ui.button("Download Collage").clicked() {
+                    download_collage(image_data);
+                }
+                
+                // Convert image data to egui texture for preview
+                if let Ok(img) = image::load_from_memory(image_data) {
+                    let size = [img.width() as _, img.height() as _];
+                    let pixels = img.to_rgba8();
+                    let pixels = pixels.as_flat_samples();
+                    let color_image = ColorImage::from_rgba_unmultiplied(size, pixels.as_slice());
+                    let texture = ctx.load_texture(
+                        "collage-preview",
+                        color_image,
+                        Default::default()
+                    );
+                    
+                    // Calculate preview size to fit window while maintaining aspect ratio
+                    let max_width = ui.available_width().min(600.0);
+                    let aspect_ratio = size[0] as f32 / size[1] as f32;
+                    let preview_size = [max_width, max_width / aspect_ratio];
+                    
+                    ui.image(SizedTexture::new(texture.id(), preview_size));
+                }
+            }
+            
+            if ui.button("Generate New Collage").clicked() {
                 state.is_loading = true;
                 
                 // Clone tracks for async closure
@@ -76,31 +129,8 @@ pub fn show_collage_window(ctx: &Context) {
                         let mut cursor = Cursor::new(Vec::new());
                         if let Ok(_) = collage.write_to(&mut cursor, image::ImageFormat::Png) {
                             let buffer = cursor.into_inner();
-                            
-                            // Create a Blob from the image data
-                            let array = js_sys::Uint8Array::from(&buffer[..]);
-                            let blob_parts = js_sys::Array::new();
-                            blob_parts.push(&array);
-                            
-                            if let Ok(blob) = Blob::new_with_u8_array_sequence(&blob_parts) {
-                                // Create a download URL
-                                if let Ok(url) = Url::create_object_url_with_blob(&blob) {
-                                    // Create and click a download link
-                                    if let Some(window) = web_sys::window() {
-                                        if let Some(document) = window.document() {
-                                            if let Some(link) = document.create_element("a").ok() {
-                                                let link = link.dyn_into::<web_sys::HtmlAnchorElement>().unwrap();
-                                                link.set_href(&url);
-                                                link.set_download("collage.png");
-                                                link.click();
-                                                
-                                                // Clean up
-                                                let _ = Url::revoke_object_url(&url);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            let mut state = APP_STATE.lock().unwrap();
+                            state.collage_image = Some(buffer);
                         }
                     }
                     

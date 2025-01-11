@@ -8,6 +8,7 @@ pub enum ViewMode {
 }
 
 pub struct AppState {
+    pub collage_image: Option<Vec<u8>>, // Store the generated collage image data
     pub username: Option<String>,
     pub saved_tracks: Vec<(String, String, String, String)>, // (track name, artist name, image url, uri)
     pub tracks_per_load: i32, // Number of tracks to load at a time
@@ -62,6 +63,7 @@ impl Default for AppState {
             .unwrap_or(ViewMode::Grid);
 
         AppState { 
+            collage_image: None,
             username: None,
             saved_tracks: Vec::new(),
             tracks_per_load,
