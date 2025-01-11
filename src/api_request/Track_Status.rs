@@ -268,12 +268,7 @@ pub async fn activate_device(device_id: String) {
         let window = web_sys::window().expect("no global window exists");
         let _ = js_sys::Reflect::set(&window, &"deviceActivated".into(), &true.into());
         
-        // Start playback
-        let device_id_clone = device_id.clone();
-        spawn_local(async move {
-            web_sys::console::log_1(&"Starting playback after device activation".into());
-            start_playback(device_id_clone).await;
-        });
+        
     }).await;
 }
 
