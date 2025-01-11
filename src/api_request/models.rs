@@ -23,7 +23,6 @@ pub struct Album {
 pub struct Image {
     pub url: String,
     pub width: Option<i32>,
-    pub height: Option<i32>,
 }
 
 #[derive(Deserialize)]

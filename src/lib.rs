@@ -3,6 +3,7 @@ mod ui;
 mod utils;
 mod storage;
 mod mediaplayer;
+mod image_processing;
 
 #[wasm_bindgen]
 extern "C" {

@@ -1,18 +1,14 @@
 use super::app_state::APP_STATE;  // Changed from crate::app_state
-use crate::api_request::{Saved_Tracks::fetch_saved_tracks, token::{ACCESS_TOKEN}}; // Removed SDK_STATUS import
+use crate::api_request::{saved_tracks::fetch_saved_tracks, token::{ACCESS_TOKEN}}; // Removed SDK_STATUS import
 use crate::loginWithSpotify;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::window;
-use egui_theme_switch::global_theme_switch;
 use super::savedtracks::show_saved_tracks_window;
-use wasm_bindgen::JsValue; // Add this import
-use web_sys::console;       // Add this import
 use wasm_bindgen::JsCast;  // Add JsCast trait for dyn_ref
 
 #[derive(Default)]
 pub struct SpotifyApp {
     pub show_player: bool, // new field
-    pub sdk_status: String, // new field
 }
 
 impl eframe::App for SpotifyApp {
@@ -46,7 +42,7 @@ impl eframe::App for SpotifyApp {
             });
 
             egui::CentralPanel::default().show(ctx, |ui| {
-                if let Some(name) = &state.username {                 
+                if let Some(_) = &state.username {                 
                     if ui.button("View Your Liked Songs").clicked() {
                         state.show_tracks = true;
                         state.tracks_window_open = true;
@@ -56,12 +52,17 @@ impl eframe::App for SpotifyApp {
                         });
                     }
                     
+                    if ui.button("Create Collage").clicked() {
+                        // Open collage creation window
+                        state.collage_window_open = true;
+                    }
+
                     if ui.button("Show Player").clicked() { // new button
                         self.show_player = true;
                         state.player_window_open = true;
                         
                         // Check for active devices on player show
-                        use crate::api_request::Track_Status::{has_active_devices, get_devices};
+                        use crate::api_request::track_status::{has_active_devices, get_devices};
                         spawn_local(async {
                             // First check for active devices
                             has_active_devices().await;
@@ -85,7 +86,7 @@ impl eframe::App for SpotifyApp {
                                                 if devices_array.length() > 0 {
                                                     if let Ok(device) = js_sys::Reflect::get(&devices_array.get(0), &"id".into()) {
                                                         if let Some(device_id) = device.as_string() {
-                                                            use crate::api_request::Track_Status::activate_device;
+                                                            use crate::api_request::track_status::activate_device;
                                                             activate_device(device_id).await;
                                                         }
                                                     }
@@ -111,6 +112,7 @@ impl eframe::App for SpotifyApp {
         // Show saved tracks window in a separate scope
         show_saved_tracks_window(ctx);
         super::settings::show_settings_window(ctx);
+        super::collage::show_collage_window(ctx);
         
         // Check loading state in a separate scope
         let is_loading = {

@@ -1,4 +1,4 @@
-use super::models::{CurrentPlaybackResponse, PlayerStateResponse, DevicesResponse, Device};
+use super::models::{CurrentPlaybackResponse, PlayerStateResponse, DevicesResponse};
 use reqwest::Client;
 use crate::api_request::spotify_apis::{handle_response, handle_empty_response};
 use crate::api_request::token::get_token;

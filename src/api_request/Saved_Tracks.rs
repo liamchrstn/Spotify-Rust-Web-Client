@@ -1,9 +1,8 @@
 use super::models::SavedTracksResponse;
-use crate::utils::{log_error, clear_token_and_redirect};
+use crate::utils::log_error;
 use crate::ui::APP_STATE;
 use crate::storage::{load_tracks, save_tracks};
 use reqwest::Client;
-use crate::api_request::spotify_apis::handle_response;
 
 // Fetches the user's saved tracks from Spotify and updates the app state
 pub async fn fetch_saved_tracks(token: String) {
