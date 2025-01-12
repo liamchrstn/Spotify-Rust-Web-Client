@@ -59,6 +59,7 @@ pub struct AppState {
     pub playlists_window_size: (f32, f32),
     pub playlists_window_pos: (f32, f32),
     pub selected_playlist_id: Option<String>,
+    pub selected_playlist_name: Option<String>, // Add this new field
     pub playlist_tracks: Vec<(String, String, String, String)>,
     pub show_playlist_tracks_window: bool,
     pub playlist_tracks_window_open: bool,
@@ -132,6 +133,7 @@ impl Default for AppState {
             playlists_window_size: (400.0, 500.0),
             playlists_window_pos: (300.0, 100.0),
             selected_playlist_id: None,
+            selected_playlist_name: None, // Initialize the new field
             playlist_tracks: Vec::new(),
             show_playlist_tracks_window: false,
             playlist_tracks_window_open: false,

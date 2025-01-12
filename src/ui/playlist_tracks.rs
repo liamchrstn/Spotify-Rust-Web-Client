@@ -18,8 +18,9 @@ pub fn show_playlist_tracks_window(ctx: &Context) {
     let view_mode = state.view_mode;
     let mut window_open = state.playlist_tracks_window_open;
     let window_pos = state.playlist_tracks_window_pos;
+    let playlist_name = state.selected_playlist_name.clone().unwrap_or_else(|| "Selected Playlist".to_string());
     
-    let window = egui::Window::new("Selected Playlist")
+    let window = egui::Window::new(&playlist_name)
         .open(&mut window_open)
         .current_pos(window_pos)
         .default_size((600.0, 400.0))
