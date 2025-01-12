@@ -56,7 +56,8 @@ fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
 
 pub fn show_collage_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
-    if !state.collage_window_open {
+    let mut collage_window_open = state.collage_window_open;
+    if !collage_window_open {
         return;
     }
 
@@ -64,62 +65,65 @@ pub fn show_collage_window(ctx: &Context) {
         .default_pos(state.collage_window_pos)
         .resizable(true)
         .collapsible(true)
+        .open(&mut collage_window_open) // Use local variable
         .show(ctx, |ui| {
             ui.label("Create a collage from your liked songs' album artwork");
 
-            // Add input fields for width and height
-            ui.horizontal(|ui| {
-                ui.label("Width:");
-                ui.add(egui::DragValue::new(&mut state.collage_width).range(100..=3840));
-                ui.label("Height:");
-                ui.add(egui::DragValue::new(&mut state.collage_height).range(100..=2160));
-            });
+            ui.collapsing("Collage Settings", |ui| {
+                // Add input fields for width and height
+                ui.horizontal(|ui| {
+                    ui.label("Width:");
+                    ui.add(egui::DragValue::new(&mut state.collage_width).range(100..=3840));
+                    ui.label("Height:");
+                    ui.add(egui::DragValue::new(&mut state.collage_height).range(100..=2160));
+                });
 
-            // Add slider for hue shift
-            ui.horizontal(|ui| {
-                ui.label("Starting Hue:")
-                .on_hover_text("Choose the starting color of the rainbow gradient effect");
-                let hue_shift = &mut state.hue_shift;
-                ui.add(egui::Slider::new(hue_shift, 0.0..=360.0).text("degrees").show_value(false));
-                let (r, g, b) = hsv_to_rgb(*hue_shift, 1.0, 1.0);
-                let color = Color32::from_rgb(r, g, b);
-                ui.colored_label(color, format!("{:.0}°", hue_shift));
-            });
+                // Add slider for hue shift
+                ui.horizontal(|ui| {
+                    ui.label("Starting Hue:")
+                    .on_hover_text("Choose the starting color of the rainbow gradient effect");
+                    let hue_shift = &mut state.hue_shift;
+                    ui.add(egui::Slider::new(hue_shift, 0.0..=360.0).text("degrees").show_value(false));
+                    let (r, g, b) = hsv_to_rgb(*hue_shift, 1.0, 1.0);
+                    let color = Color32::from_rgb(r, g, b);
+                    ui.colored_label(color, format!("{:.0}°", hue_shift));
+                });
 
-            // Add options for gradient direction
-            ui.horizontal(|ui| {
-                ui.label("Gradient Direction:");
-                ui.selectable_value(&mut state.gradient_direction, GradientDirection::Diagonal, "Diagonal");
-                ui.selectable_value(&mut state.gradient_direction, GradientDirection::Horizontal, "Horizontal");
-                ui.selectable_value(&mut state.gradient_direction, GradientDirection::Vertical, "Vertical");
-            });
+                // Add options for gradient direction
+                ui.horizontal(|ui| {
+                    ui.label("Gradient Direction:");
+                    ui.selectable_value(&mut state.gradient_direction, GradientDirection::Diagonal, "Diagonal");
+                    ui.selectable_value(&mut state.gradient_direction, GradientDirection::Horizontal, "Horizontal");
+                    ui.selectable_value(&mut state.gradient_direction, GradientDirection::Vertical, "Vertical");
+                });
 
-            // Conditionally show options for starting corner or side
-            match state.gradient_direction {
-                GradientDirection::Diagonal => {
-                    ui.horizontal(|ui| {
-                        ui.label("Starting Corner:");
-                        ui.selectable_value(&mut state.starting_corner, StartingCorner::TopLeft, "Top Left");
-                        ui.selectable_value(&mut state.starting_corner, StartingCorner::TopRight, "Top Right");
-                        ui.selectable_value(&mut state.starting_corner, StartingCorner::BottomLeft, "Bottom Left");
-                        ui.selectable_value(&mut state.starting_corner, StartingCorner::BottomRight, "Bottom Right");
-                    });
-                },
-                GradientDirection::Horizontal => {
-                    ui.horizontal(|ui| {
-                        ui.label("Starting Side:");
-                        ui.selectable_value(&mut state.starting_corner, StartingCorner::TopLeft, "Top");
-                        ui.selectable_value(&mut state.starting_corner, StartingCorner::TopRight, "Bottom");
-                    });
-                },
-                GradientDirection::Vertical => {
-                    ui.horizontal(|ui| {
-                        ui.label("Starting Side:");
-                        ui.selectable_value(&mut state.starting_corner, StartingCorner::TopLeft, "Left");
-                        ui.selectable_value(&mut state.starting_corner, StartingCorner::BottomLeft, "Right");
-                    });
-                },
-            }
+                // Conditionally show options for starting corner or side
+                match state.gradient_direction {
+                    GradientDirection::Diagonal => {
+                        ui.horizontal(|ui| {
+                            ui.label("Starting Corner:");
+                            ui.selectable_value(&mut state.starting_corner, StartingCorner::TopLeft, "Top Left");
+                            ui.selectable_value(&mut state.starting_corner, StartingCorner::TopRight, "Top Right");
+                            ui.selectable_value(&mut state.starting_corner, StartingCorner::BottomLeft, "Bottom Left");
+                            ui.selectable_value(&mut state.starting_corner, StartingCorner::BottomRight, "Bottom Right");
+                        });
+                    },
+                    GradientDirection::Horizontal => {
+                        ui.horizontal(|ui| {
+                            ui.label("Starting Side:");
+                            ui.selectable_value(&mut state.starting_corner, StartingCorner::TopLeft, "Top");
+                            ui.selectable_value(&mut state.starting_corner, StartingCorner::TopRight, "Bottom");
+                        });
+                    },
+                    GradientDirection::Vertical => {
+                        ui.horizontal(|ui| {
+                            ui.label("Starting Side:");
+                            ui.selectable_value(&mut state.starting_corner, StartingCorner::TopLeft, "Left");
+                            ui.selectable_value(&mut state.starting_corner, StartingCorner::BottomLeft, "Right");
+                        });
+                    },
+                }
+            });
 
             // Show preview if we have a generated image
             if let Some(image_data) = &state.collage_image {
@@ -220,4 +224,6 @@ pub fn show_collage_window(ctx: &Context) {
                 ui.add(ProgressBar::new(state.progress).animate(true).text(progress_text));
             }
         });
+
+    state.collage_window_open = collage_window_open;
 }
