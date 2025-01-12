@@ -2,7 +2,7 @@ use web_sys::window;
 
 pub async fn get_color_shift() -> f32 {
     // Default color shift of 240 degrees (start from blue)
-    let default_shift = 240.0;
+    let default_shift = 140.0;
     
     // Try to get from localStorage
     if let Some(window) = window() {

@@ -1,7 +1,7 @@
 use super::app_state::APP_STATE;
 use crate::image_processing::user_interface::get_color_shift;
 use crate::image_processing::collage::create_collage;
-use egui::{Context, ColorImage, TextureHandle, load::SizedTexture, ProgressBar};
+use egui::{Context, ColorImage, load::SizedTexture, ProgressBar};
 use wasm_bindgen_futures::spawn_local;
 use web_sys::{Blob, Url};
 use wasm_bindgen::JsCast;
@@ -44,7 +44,15 @@ pub fn show_collage_window(ctx: &Context) {
         .resizable(true)
         .show(ctx, |ui| {
             ui.label("Create a collage from your liked songs' album artwork");
-            
+
+            // Add input fields for width and height
+            ui.horizontal(|ui| {
+                ui.label("Width:");
+                ui.add(egui::DragValue::new(&mut state.collage_width).range(100..=3840));
+                ui.label("Height:");
+                ui.add(egui::DragValue::new(&mut state.collage_height).range(100..=2160));
+            });
+
             // Show preview if we have a generated image
             if let Some(image_data) = &state.collage_image {
                 if ui.button("Download Collage").clicked() {
@@ -72,66 +80,71 @@ pub fn show_collage_window(ctx: &Context) {
                 }
             }
             
-            if ui.button("Generate New Collage").clicked() {
-                // Clone tracks for async closure
-                let tracks = state.saved_tracks.clone();
-                
-                // Set collage_loading to true
-                state.collage_loading = true;
-                
-                spawn_local(async move {
-                    // Get color shift preference from user
-                    let color_shift = get_color_shift().await;
+            // Only show generate button when not loading
+            if !state.collage_loading {
+                if ui.button("Generate New Collage").clicked() {
+                    // Clone tracks for async closure
+                    let tracks = state.saved_tracks.clone();
+                    let width = state.collage_width;
+                    let height = state.collage_height;
                     
-                    // Download and process album artwork
-                    let mut images = Vec::new();
-                    let total_images = tracks.len();
-                    let mut loaded_count = 0;
+                    // Set collage_loading to true
+                    state.collage_loading = true;
                     
-                    // Update loading message
-                    {
-                        let mut state = APP_STATE.lock().unwrap();
-                        state.loading_message = format!("Loading images (0/{})...", total_images);
-                    }
-                    
-                    for (_, _, image_url, _) in tracks {
-                        if let Ok(bytes) = reqwest::get(&image_url).await {
-                            if let Ok(bytes) = bytes.bytes().await {
-                                if let Ok(img) = image::load_from_memory(&bytes) {
-                                    images.push(img);
-                                    loaded_count += 1;
-                                    // Update progress
-                                    let mut state = APP_STATE.lock().unwrap();
-                                    state.progress = loaded_count as f32 / total_images as f32;
+                    spawn_local(async move {
+                        // Get color shift preference from user
+                        let color_shift = get_color_shift().await;
+                        
+                        // Download and process album artwork
+                        let mut images = Vec::new();
+                        let total_images = tracks.len();
+                        let mut loaded_count = 0;
+                        
+                        // Update loading message
+                        {
+                            let mut state = APP_STATE.lock().unwrap();
+                            state.loading_message = format!("Loading images (0/{})...", total_images);
+                        }
+                        
+                        for (_, _, image_url, _) in tracks {
+                            if let Ok(bytes) = reqwest::get(&image_url).await {
+                                if let Ok(bytes) = bytes.bytes().await {
+                                    if let Ok(img) = image::load_from_memory(&bytes) {
+                                        images.push(img);
+                                        loaded_count += 1;
+                                        // Update progress
+                                        let mut state = APP_STATE.lock().unwrap();
+                                        state.progress = loaded_count as f32 / total_images as f32;
+                                    }
                                 }
                             }
                         }
-                    }
-                    
-                    // Only proceed if we have images
-                    if images.is_empty() {
+                        
+                        // Only proceed if we have images
+                        if images.is_empty() {
+                            let mut state = APP_STATE.lock().unwrap();
+                            state.progress = 0.0;
+                            state.collage_loading = false; // Reset collage_loading
+                            return;
+                        }
+                        
+                        // Create collage with downloaded images
+                        if let Ok(collage) = create_collage(images, width, height, color_shift) {
+                            // Create a cursor to write the image to
+                            let mut cursor = Cursor::new(Vec::new());
+                            if let Ok(_) = collage.write_to(&mut cursor, image::ImageFormat::Png) {
+                                let buffer = cursor.into_inner();
+                                let mut state = APP_STATE.lock().unwrap();
+                                state.collage_image = Some(buffer);
+                            }
+                        }
+                        
+                        // Update loading state
                         let mut state = APP_STATE.lock().unwrap();
                         state.progress = 0.0;
                         state.collage_loading = false; // Reset collage_loading
-                        return;
-                    }
-                    
-                    // Create collage with downloaded images
-                    if let Ok(collage) = create_collage(images, 1920, 1080, color_shift) {
-                        // Create a cursor to write the image to
-                        let mut cursor = Cursor::new(Vec::new());
-                        if let Ok(_) = collage.write_to(&mut cursor, image::ImageFormat::Png) {
-                            let buffer = cursor.into_inner();
-                            let mut state = APP_STATE.lock().unwrap();
-                            state.collage_image = Some(buffer);
-                        }
-                    }
-                    
-                    // Update loading state
-                    let mut state = APP_STATE.lock().unwrap();
-                    state.progress = 0.0;
-                    state.collage_loading = false; // Reset collage_loading
-                });
+                    });
+                }
             }
             
             if state.collage_loading {
