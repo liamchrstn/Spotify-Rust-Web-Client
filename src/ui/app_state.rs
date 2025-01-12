@@ -31,6 +31,7 @@ pub struct AppState {
     pub collage_window_pos: (f32, f32), // Default position for Collage window
     pub loading_message: String, // Status message for loading operations
     pub progress: f32, // Progress for the progress bar
+    pub collage_loading: bool, // Loading state for collage generation
 }
 
 impl Default for AppState {
@@ -87,6 +88,7 @@ impl Default for AppState {
             collage_window_pos: (650.0, 30.0),
             loading_message: String::new(),
             progress: 0.0,
+            collage_loading: false,
         }
     }
 }
