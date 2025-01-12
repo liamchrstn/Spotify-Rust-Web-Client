@@ -32,6 +32,8 @@ pub struct AppState {
     pub loading_message: String, // Status message for loading operations
     pub progress: f32, // Progress for the progress bar
     pub collage_loading: bool, // Loading state for collage generation
+    pub collage_width: u32,
+    pub collage_height: u32,
 }
 
 impl Default for AppState {
@@ -89,6 +91,8 @@ impl Default for AppState {
             loading_message: String::new(),
             progress: 0.0,
             collage_loading: false,
+            collage_width: 1920,
+            collage_height: 1080,
         }
     }
 }
