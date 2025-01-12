@@ -26,7 +26,7 @@ pub fn create_collage(images: Vec<DynamicImage>, width: u32, height: u32, color_
         }
     }
 
-    // Sort colored images by hue with hue shifting to start with blues
+    // Sort colored images by hue with hue shifting
     let mut images_with_hue: Vec<(DynamicImage, f32)> = colored_images.into_iter()
         .map(|img| {
             let hue = calculate_dominant_hue(&img);

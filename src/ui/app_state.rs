@@ -34,6 +34,7 @@ pub struct AppState {
     pub collage_loading: bool, // Loading state for collage generation
     pub collage_width: u32,
     pub collage_height: u32,
+    pub hue_shift: f32, // Add hue shift field
 }
 
 impl Default for AppState {
@@ -93,6 +94,7 @@ impl Default for AppState {
             collage_loading: false,
             collage_width: 1920,
             collage_height: 1080,
+            hue_shift: 0.0, // Default hue shift value
         }
     }
 }

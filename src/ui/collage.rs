@@ -53,6 +53,12 @@ pub fn show_collage_window(ctx: &Context) {
                 ui.add(egui::DragValue::new(&mut state.collage_height).range(100..=2160));
             });
 
+            // Add slider for hue shift
+            ui.horizontal(|ui| {
+                ui.label("Hue Shift:");
+                ui.add(egui::Slider::new(&mut state.hue_shift, 0.0..=360.0).text("degrees"));
+            });
+
             // Show preview if we have a generated image
             if let Some(image_data) = &state.collage_image {
                 if ui.button("Download Collage").clicked() {
@@ -87,14 +93,12 @@ pub fn show_collage_window(ctx: &Context) {
                     let tracks = state.saved_tracks.clone();
                     let width = state.collage_width;
                     let height = state.collage_height;
+                    let hue_shift = state.hue_shift; // Get hue shift value from state
                     
                     // Set collage_loading to true
                     state.collage_loading = true;
                     
                     spawn_local(async move {
-                        // Get color shift preference from user
-                        let color_shift = get_color_shift().await;
-                        
                         // Download and process album artwork
                         let mut images = Vec::new();
                         let total_images = tracks.len();
@@ -129,7 +133,7 @@ pub fn show_collage_window(ctx: &Context) {
                         }
                         
                         // Create collage with downloaded images
-                        if let Ok(collage) = create_collage(images, width, height, color_shift) {
+                        if let Ok(collage) = create_collage(images, width, height, hue_shift) {
                             // Create a cursor to write the image to
                             let mut cursor = Cursor::new(Vec::new());
                             if let Ok(_) = collage.write_to(&mut cursor, image::ImageFormat::Png) {
