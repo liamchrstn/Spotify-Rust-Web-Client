@@ -35,6 +35,7 @@ pub struct AppState {
     pub total_tracks: Option<i32>,
     pub is_loading: bool,  // Add loading state
     pub view_mode: ViewMode,
+    pub playlist_view_mode: ViewMode,  // Add this new field
     pub search_text: String,
     pub settings_window_open: bool,
     pub player_name: String,
@@ -101,7 +102,8 @@ impl Default for AppState {
             tracks_window_size: (800.0, 600.0),
             total_tracks: None,
             is_loading: false,
-            view_mode,
+            view_mode: ViewMode::List,
+            playlist_view_mode: ViewMode::List,  // Add this field initialization
             search_text: String::new(),
             settings_window_open: false,
             player_name,
