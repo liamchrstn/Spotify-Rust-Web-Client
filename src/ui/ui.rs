@@ -6,7 +6,7 @@ use web_sys::window;
 use super::savedtracks::show_saved_tracks_window;
 use wasm_bindgen::JsCast;  // Add JsCast trait for dyn_ref
 use crate::api_request::playlists::fetch_playlists;
-use crate::ui::playlist_tracks::show_playlist_tracks_window;
+use crate::ui::playlist_tracks::show_playlist_tracks_windows;
 
 #[derive(Default)]
 pub struct SpotifyApp {
@@ -124,7 +124,7 @@ impl eframe::App for SpotifyApp {
         super::settings::show_settings_window(ctx);
         super::collage::show_collage_window(ctx);
         super::playlists_window::show_playlists_window(ctx);
-        show_playlist_tracks_window(ctx);
+        show_playlist_tracks_windows(ctx); // Call the new function
         
         // Check loading state in a separate scope
         let is_loading = {
