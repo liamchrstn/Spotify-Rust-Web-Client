@@ -73,10 +73,11 @@ pub fn show_collage_window(ctx: &Context) {
             }
             
             if ui.button("Generate New Collage").clicked() {
-                state.is_loading = true;
-                
                 // Clone tracks for async closure
                 let tracks = state.saved_tracks.clone();
+                
+                // Set collage_loading to true
+                state.collage_loading = true;
                 
                 spawn_local(async move {
                     // Get color shift preference from user
@@ -90,7 +91,6 @@ pub fn show_collage_window(ctx: &Context) {
                     // Update loading message
                     {
                         let mut state = APP_STATE.lock().unwrap();
-                        state.is_loading = true;
                         state.loading_message = format!("Loading images (0/{})...", total_images);
                     }
                     
@@ -111,8 +111,8 @@ pub fn show_collage_window(ctx: &Context) {
                     // Only proceed if we have images
                     if images.is_empty() {
                         let mut state = APP_STATE.lock().unwrap();
-                        state.is_loading = false;
                         state.progress = 0.0;
+                        state.collage_loading = false; // Reset collage_loading
                         return;
                     }
                     
@@ -129,12 +129,12 @@ pub fn show_collage_window(ctx: &Context) {
                     
                     // Update loading state
                     let mut state = APP_STATE.lock().unwrap();
-                    state.is_loading = false;
                     state.progress = 0.0;
+                    state.collage_loading = false; // Reset collage_loading
                 });
             }
             
-            if state.is_loading {
+            if state.collage_loading {
                 let progress_text = format!("{}/{}", (state.progress * state.saved_tracks.len() as f32).round() as i32, state.saved_tracks.len());
                 ui.add(ProgressBar::new(state.progress).animate(true).text(progress_text));
             }

@@ -39,13 +39,13 @@ pub fn show_saved_tracks_window(ctx: &Context) {
         .min_width(300.0)
         .resizable(true)
         .show(ctx, |ui| {
-            if is_loading {
+            if state.is_loading {
                 ui.horizontal(|ui| {
                     ui.spinner();
-                    if let Some(total) = total_tracks {
+                    if let Some(total) = state.total_tracks {
                         ui.label(format!(
-                            "Loading tracks... ({} of {} loaded)", 
-                            tracks.len(), 
+                            "Loading tracks... ({} of {} loaded)",
+                            state.saved_tracks.len(),
                             total
                         ));
                     } else {
