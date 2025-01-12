@@ -5,7 +5,6 @@ use wasm_bindgen_futures::spawn_local;
 use web_sys::{Blob, Url};
 use wasm_bindgen::JsCast;
 use std::io::Cursor;
-use std::sync::Arc;
 
 fn download_collage(image_data: &[u8]) {
     // Create a Blob from the image data
