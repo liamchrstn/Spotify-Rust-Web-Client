@@ -64,6 +64,7 @@ pub struct AppState {
     pub show_playlist_tracks_window: bool,
     pub playlist_tracks_window_open: bool,
     pub playlist_tracks_window_pos: (f32, f32),
+    pub playlist_windows: Vec<(String, String, Vec<(String, String, String, String)>, ViewMode, bool, (f32, f32))>, // Add this new field
 }
 
 impl Default for AppState {
@@ -138,6 +139,7 @@ impl Default for AppState {
             show_playlist_tracks_window: false,
             playlist_tracks_window_open: false,
             playlist_tracks_window_pos: (500.0, 100.0),
+            playlist_windows: Vec::new(), // Initialize the new field
         }
     }
 }

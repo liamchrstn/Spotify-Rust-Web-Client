@@ -1,6 +1,7 @@
 use reqwest::Client;
 use crate::ui::APP_STATE;
 use crate::utils::log_error;
+use crate::ui::ViewMode;
 
 pub async fn fetch_playlist_tracks(playlist_id: String, token: String) {
     let client = Client::new();
@@ -10,7 +11,6 @@ pub async fn fetch_playlist_tracks(playlist_id: String, token: String) {
     );
 
     let mut state = APP_STATE.lock().unwrap();
-    state.playlist_tracks.clear();
     state.is_loading = true;
     drop(state);
 
@@ -47,10 +47,7 @@ pub async fn fetch_playlist_tracks(playlist_id: String, token: String) {
                     .collect::<Vec<_>>();
 
                 let mut state = APP_STATE.lock().unwrap();
-                state.playlist_tracks = tracks_data;
-                state.selected_playlist_name = Some(playlist_name);
-                state.show_playlist_tracks_window = true;
-                state.playlist_tracks_window_open = true;
+                state.playlist_windows.push((playlist_id, playlist_name, tracks_data, ViewMode::List, true, (500.0, 100.0)));
                 state.is_loading = false;
             }
         } else {
