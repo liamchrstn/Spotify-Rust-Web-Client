@@ -1,10 +1,10 @@
 use egui::Context;
 use crate::ui::app_state::{APP_STATE, ViewMode};
-use crate::ui::tracks_ui::{show_list_view, show_grid_view};
+use crate::ui::tracks_ui::{show_list_view, show_grid_view, ListViewMode};
 
 pub fn show_playlists_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
-    if !state.show_playlists {
+    if (!state.show_playlists) {
         return;
     }
 
@@ -39,11 +39,11 @@ pub fn show_playlists_window(ctx: &Context) {
             match view_mode {
                 ViewMode::List => {
                     egui::ScrollArea::vertical().show(ui, |ui| {
-                        show_list_view(ui, &filtered);
+                        show_list_view(ui, &filtered, ListViewMode::Playlists);
                     });
                 },
                 ViewMode::Grid => {
-                    show_grid_view(ui, &filtered, None, playlists.len(), playlists.len() as i32);
+                    show_grid_view(ui, &filtered, None, playlists.len(), playlists.len() as i32, ListViewMode::Playlists);
                 },
             }
         }

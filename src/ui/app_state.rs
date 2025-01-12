@@ -58,6 +58,11 @@ pub struct AppState {
     pub playlists_window_open: bool,
     pub playlists_window_size: (f32, f32),
     pub playlists_window_pos: (f32, f32),
+    pub selected_playlist_id: Option<String>,
+    pub playlist_tracks: Vec<(String, String, String, String)>,
+    pub show_playlist_tracks_window: bool,
+    pub playlist_tracks_window_open: bool,
+    pub playlist_tracks_window_pos: (f32, f32),
 }
 
 impl Default for AppState {
@@ -126,6 +131,11 @@ impl Default for AppState {
             playlists_window_open: false,
             playlists_window_size: (400.0, 500.0),
             playlists_window_pos: (300.0, 100.0),
+            selected_playlist_id: None,
+            playlist_tracks: Vec::new(),
+            show_playlist_tracks_window: false,
+            playlist_tracks_window_open: false,
+            playlist_tracks_window_pos: (500.0, 100.0),
         }
     }
 }
