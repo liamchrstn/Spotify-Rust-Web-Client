@@ -6,3 +6,4 @@ pub mod imagerender;
 pub mod user_profile;
 pub mod saved_tracks;
 pub mod track_status;
+pub mod playlist_tracks;

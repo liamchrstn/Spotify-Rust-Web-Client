@@ -1,6 +1,6 @@
 use super::app_state::{ViewMode, APP_STATE};
 use egui::Context;
-use crate::ui::tracks_ui::{show_list_view, show_grid_view};
+use crate::ui::tracks_ui::{show_list_view, show_grid_view, ListViewMode};
 
 pub fn show_saved_tracks_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
@@ -88,7 +88,7 @@ pub fn show_saved_tracks_window(ctx: &Context) {
                     egui::ScrollArea::vertical()
                         .stick_to_bottom(true)
                         .show(ui, |ui| {
-                            show_list_view(ui, &filtered_tracks);
+                            show_list_view(ui, &filtered_tracks, ListViewMode::Tracks);
 
                             // Add Load More button only at the bottom after showing all tracks
                             if let Some(total) = total_tracks {
@@ -111,7 +111,14 @@ pub fn show_saved_tracks_window(ctx: &Context) {
                             }
                         });
                 },
-                ViewMode::Grid => show_grid_view(ui, &filtered_tracks, total_tracks, state.saved_tracks.len(), state.loaded_tracks_count),
+                ViewMode::Grid => show_grid_view(
+                    ui,
+                    &filtered_tracks,
+                    total_tracks,
+                    state.saved_tracks.len(),
+                    state.loaded_tracks_count,
+                    ListViewMode::Tracks
+                ),
             }
         });
         

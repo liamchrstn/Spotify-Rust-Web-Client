@@ -2,8 +2,13 @@ use egui::Ui;
 use egui_extras::{TableBuilder, Column};
 use crate::api_request::imagerender::get_or_load_image;
 
-pub fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String, String)]) {
-    for (track, artists, image_url, uri) in tracks {
+pub enum ListViewMode {
+    Tracks,
+    Playlists,
+}
+
+pub fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String, String)], mode: ListViewMode) {
+    for (track, artists, image_url, uri_or_id) in tracks {
         let row_response = ui.horizontal(|ui| {
             // Add album art
             if let Some(image) = get_or_load_image(ui.ctx(), image_url) {
@@ -29,10 +34,25 @@ pub fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String, String)])
 
         // Make the row clickable
         if row_response.interact(egui::Sense::click()).clicked() {
-            let uri = uri.clone();
-            wasm_bindgen_futures::spawn_local(async move {
-                crate::api_request::track_status::play_track(uri).await;
-            });
+            match mode {
+                ListViewMode::Tracks => {
+                    let uri = uri_or_id.clone();
+                    wasm_bindgen_futures::spawn_local(async move {
+                        crate::api_request::track_status::play_track(uri).await;
+                    });
+                }
+                ListViewMode::Playlists => {
+                    let id = uri_or_id.clone();
+                    let token = web_sys::window()
+                        .and_then(|window| window.local_storage().ok().flatten())
+                        .and_then(|storage| storage.get_item("spotify_token").ok().flatten())
+                        .unwrap_or_default();
+                    
+                    wasm_bindgen_futures::spawn_local(async move {
+                        crate::api_request::playlist_tracks::fetch_playlist_tracks(id, token).await;
+                    });
+                }
+            }
         }
         
         ui.add_space(4.0);
@@ -41,7 +61,7 @@ pub fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String, String)])
     }
 }
 
-pub fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)], total_tracks: Option<i32>, saved_tracks_len: usize, loaded_tracks_count: i32) {
+pub fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)], total_tracks: Option<i32>, saved_tracks_len: usize, loaded_tracks_count: i32, mode: ListViewMode) {
     let available_width = ui.available_width();
     let column_width = (available_width / 3.0).max(100.0) - 10.0; // Add padding
     
@@ -60,7 +80,7 @@ pub fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)],
                     body.row(100.0, |mut row| {
                         for col in 0..3 {
                             let idx = row_idx * 3 + col;
-                            if let Some((track, artists, image_url, uri)) = tracks.get(idx) {
+                            if let Some((track, artists, image_url, uri_or_id)) = tracks.get(idx) {
                                 row.col(|ui| {
                                     ui.scope(|ui| {
                                         draw_vlines(ui, 100.0, col > 0, |ui| {
@@ -94,10 +114,25 @@ pub fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)],
                                                     ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
                                                 }
                                                 if ui.rect_contains_pointer(ui.min_rect()) && ui.input(|i| i.pointer.primary_clicked()) {
-                                                    let uri = uri.clone();
-                                                    wasm_bindgen_futures::spawn_local(async move {
-                                                        crate::api_request::track_status::play_track(uri).await;
-                                                    });
+                                                    match mode {
+                                                        ListViewMode::Tracks => {
+                                                            let uri = uri_or_id.clone();
+                                                            wasm_bindgen_futures::spawn_local(async move {
+                                                                crate::api_request::track_status::play_track(uri).await;
+                                                            });
+                                                        }
+                                                        ListViewMode::Playlists => {
+                                                            let id = uri_or_id.clone();
+                                                            let token = web_sys::window()
+                                                                .and_then(|window| window.local_storage().ok().flatten())
+                                                                .and_then(|storage| storage.get_item("spotify_token").ok().flatten())
+                                                                .unwrap_or_default();
+                                                            
+                                                            wasm_bindgen_futures::spawn_local(async move {
+                                                                crate::api_request::playlist_tracks::fetch_playlist_tracks(id, token).await;
+                                                            });
+                                                        }
+                                                    }
                                                 }
                                             });
                                         });
