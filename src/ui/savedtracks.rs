@@ -4,7 +4,7 @@ use crate::ui::tracks_ui::{show_list_view, show_grid_view};
 
 pub fn show_saved_tracks_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
-    if !state.show_tracks {
+    if (!state.show_tracks) {
         return;
     }
 
@@ -61,13 +61,13 @@ pub fn show_saved_tracks_window(ctx: &Context) {
                 // Push view controls to the right
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if ui.toggle_value(&mut (view_mode == ViewMode::List), &format!("{} List", egui_phosphor::bold::LIST)).clicked() {
-                        state.view_mode = ViewMode::List;
+                        state.view_mode = ViewMode::List;  // Only changes saved tracks view mode
                         window_size = (400.0, 600.0);
                     }
                     ui.add_space(8.0);
                     if ui.toggle_value(&mut (view_mode == ViewMode::Grid), &format!("{} Grid", egui_phosphor::bold::SQUARES_FOUR)).clicked() {
                         window_size = (800.0, 600.0);
-                        state.view_mode = ViewMode::Grid;
+                        state.view_mode = ViewMode::Grid;  // Only changes saved tracks view mode
                     }
                     ui.label("View:");
                 });
