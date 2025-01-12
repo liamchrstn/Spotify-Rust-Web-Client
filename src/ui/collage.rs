@@ -1,5 +1,4 @@
 use super::app_state::APP_STATE;
-use crate::image_processing::user_interface::get_color_shift;
 use crate::image_processing::collage::create_collage;
 use egui::{Context, Color32, ColorImage, load::SizedTexture, ProgressBar}; // Add Color32
 use wasm_bindgen_futures::spawn_local;
@@ -64,6 +63,7 @@ pub fn show_collage_window(ctx: &Context) {
     egui::Window::new("Create Collage")
         .default_pos(state.collage_window_pos)
         .resizable(true)
+        .collapsible(true)
         .show(ctx, |ui| {
             ui.label("Create a collage from your liked songs' album artwork");
 
