@@ -1,7 +1,7 @@
 use super::app_state::APP_STATE;
 use crate::image_processing::user_interface::get_color_shift;
 use crate::image_processing::collage::create_collage;
-use egui::{Context, ColorImage, load::SizedTexture, ProgressBar};
+use egui::{Context, Color32, ColorImage, load::SizedTexture, ProgressBar}; // Add Color32
 use wasm_bindgen_futures::spawn_local;
 use web_sys::{Blob, Url};
 use wasm_bindgen::JsCast;
@@ -33,9 +33,31 @@ fn download_collage(image_data: &[u8]) {
     }
 }
 
+fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
+    let c = v * s;
+    let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
+    let m = v - c;
+
+    let (r, g, b) = match h {
+        0.0..=60.0 => (c, x, 0.0),
+        60.0..=120.0 => (x, c, 0.0),
+        120.0..=180.0 => (0.0, c, x),
+        180.0..=240.0 => (0.0, x, c),
+        240.0..=300.0 => (x, 0.0, c),
+        300.0..=360.0 => (c, 0.0, x),
+        _ => (0.0, 0.0, 0.0),
+    };
+
+    (
+        ((r + m) * 255.0) as u8,
+        ((g + m) * 255.0) as u8,
+        ((b + m) * 255.0) as u8,
+    )
+}
+
 pub fn show_collage_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
-    if !state.collage_window_open {
+    if (!state.collage_window_open) {
         return;
     }
 
@@ -56,7 +78,11 @@ pub fn show_collage_window(ctx: &Context) {
             // Add slider for hue shift
             ui.horizontal(|ui| {
                 ui.label("Hue Shift:");
-                ui.add(egui::Slider::new(&mut state.hue_shift, 0.0..=360.0).text("degrees"));
+                let hue_shift = &mut state.hue_shift;
+                ui.add(egui::Slider::new(hue_shift, 0.0..=360.0).text("degrees").show_value(false));
+                let (r, g, b) = hsv_to_rgb(*hue_shift, 1.0, 1.0);
+                let color = Color32::from_rgb(r, g, b);
+                ui.colored_label(color, format!("{:.0}°", hue_shift));
             });
 
             // Show preview if we have a generated image
@@ -87,8 +113,8 @@ pub fn show_collage_window(ctx: &Context) {
             }
             
             // Only show generate button when not loading
-            if !state.collage_loading {
-                if ui.button("Generate New Collage").clicked() {
+            if (!state.collage_loading) {
+                if (ui.button("Generate New Collage").clicked()) {
                     // Clone tracks for async closure
                     let tracks = state.saved_tracks.clone();
                     let width = state.collage_width;
@@ -125,7 +151,7 @@ pub fn show_collage_window(ctx: &Context) {
                         }
                         
                         // Only proceed if we have images
-                        if images.is_empty() {
+                        if (images.is_empty()) {
                             let mut state = APP_STATE.lock().unwrap();
                             state.progress = 0.0;
                             state.collage_loading = false; // Reset collage_loading
@@ -151,7 +177,7 @@ pub fn show_collage_window(ctx: &Context) {
                 }
             }
             
-            if state.collage_loading {
+            if (state.collage_loading) {
                 let progress_text = format!("{}/{}", (state.progress * state.saved_tracks.len() as f32).round() as i32, state.saved_tracks.len());
                 ui.add(ProgressBar::new(state.progress).animate(true).text(progress_text));
             }
