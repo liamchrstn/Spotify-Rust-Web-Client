@@ -1,7 +1,7 @@
 use super::app_state::APP_STATE;
 use crate::image_processing::user_interface::get_color_shift;
 use crate::image_processing::collage::create_collage;
-use egui::{Context, ColorImage, TextureHandle, load::SizedTexture};
+use egui::{Context, ColorImage, TextureHandle, load::SizedTexture, ProgressBar};
 use wasm_bindgen_futures::spawn_local;
 use web_sys::{Blob, Url};
 use wasm_bindgen::JsCast;
@@ -100,10 +100,9 @@ pub fn show_collage_window(ctx: &Context) {
                                 if let Ok(img) = image::load_from_memory(&bytes) {
                                     images.push(img);
                                     loaded_count += 1;
-                                    
-                                    // Update progress message
+                                    // Update progress
                                     let mut state = APP_STATE.lock().unwrap();
-                                    state.loading_message = format!("Loading images ({}/{})...", loaded_count, total_images);
+                                    state.progress = loaded_count as f32 / total_images as f32;
                                 }
                             }
                         }
@@ -113,14 +112,8 @@ pub fn show_collage_window(ctx: &Context) {
                     if images.is_empty() {
                         let mut state = APP_STATE.lock().unwrap();
                         state.is_loading = false;
-                        state.loading_message = "Failed to load any images.".to_string();
+                        state.progress = 0.0;
                         return;
-                    }
-                    
-                    // Update status for collage creation
-                    {
-                        let mut state = APP_STATE.lock().unwrap();
-                        state.loading_message = "Creating collage...".to_string();
                     }
                     
                     // Create collage with downloaded images
@@ -137,13 +130,13 @@ pub fn show_collage_window(ctx: &Context) {
                     // Update loading state
                     let mut state = APP_STATE.lock().unwrap();
                     state.is_loading = false;
-                    state.loading_message = String::new();
+                    state.progress = 0.0;
                 });
             }
             
-            if state.is_loading || !state.loading_message.is_empty() {
-                ui.spinner();
-                ui.label(&state.loading_message);
+            if state.is_loading {
+                let progress_text = format!("{}/{}", (state.progress * state.saved_tracks.len() as f32).round() as i32, state.saved_tracks.len());
+                ui.add(ProgressBar::new(state.progress).animate(true).text(progress_text));
             }
         });
 }
