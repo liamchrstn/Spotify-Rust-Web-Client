@@ -64,7 +64,7 @@ async fn fetch_tracks_batch(client: &Client, token: &str, offset: usize, limit: 
 pub async fn load_more_tracks(token: String, is_initial: bool) {
     // Try loading from storage first
     if let Some(stored_tracks) = load_tracks() {
-        let mut state = APP_STATE.lock().unwrap();
+        let mut state = APP_STATE.lock().unwrap();  // Changed back to mut
         let offset = state.loaded_tracks_count as usize;
         let desired_limit = if state.tracks_per_load >= 1000 {
             if let Some(total) = state.total_tracks {
@@ -96,8 +96,7 @@ pub async fn load_more_tracks(token: String, is_initial: bool) {
     }
 
     // If storage is empty or we've loaded all stored tracks, fetch from API
-    let client = Client::new();
-    let mut state = APP_STATE.lock().unwrap();
+    let mut state = APP_STATE.lock().unwrap();  // Keep as mut
     let offset = state.loaded_tracks_count as usize;
     let desired_limit = if state.tracks_per_load >= 1000 {
         if let Some(total) = state.total_tracks {
@@ -114,6 +113,9 @@ pub async fn load_more_tracks(token: String, is_initial: bool) {
     if !is_initial {
         gloo_timers::future::TimeoutFuture::new(100).await;
     }
+
+    // Create client for API requests
+    let client = Client::new();
 
     // Calculate how many batches we need
     let num_batches = (desired_limit as f32 / 50.0).ceil() as i32;

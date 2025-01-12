@@ -52,6 +52,11 @@ pub struct AppState {
     pub hue_shift: f32, // Add hue shift field
     pub gradient_direction: GradientDirection, // Add gradient direction field
     pub starting_corner: StartingCorner, // Add starting corner field
+    pub playlists: Vec<(String, String, String, String)>, // (playlist name, owner, image url, id)
+    pub show_playlists: bool,
+    pub playlists_window_open: bool,
+    pub playlists_window_size: (f32, f32),
+    pub playlists_window_pos: (f32, f32),
 }
 
 impl Default for AppState {
@@ -114,6 +119,11 @@ impl Default for AppState {
             hue_shift: 0.0, // Default hue shift value
             gradient_direction: GradientDirection::Diagonal, // Default gradient direction
             starting_corner: StartingCorner::TopLeft, // Default starting corner
+            playlists: Vec::new(),
+            show_playlists: false,
+            playlists_window_open: false,
+            playlists_window_size: (400.0, 500.0),
+            playlists_window_pos: (300.0, 100.0),
         }
     }
 }

@@ -18,7 +18,7 @@ pub fn is_player_window_open() -> bool {
 }
 
 pub fn show_mediaplayer_window(ctx: &egui::Context) {
-    let mut state = APP_STATE.lock().unwrap();
+    let state = APP_STATE.lock().unwrap();
     let window_open = state.player_window_open;
 
     // Only proceed if the window is open

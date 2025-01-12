@@ -5,6 +5,7 @@ use wasm_bindgen_futures::spawn_local;
 use web_sys::window;
 use super::savedtracks::show_saved_tracks_window;
 use wasm_bindgen::JsCast;  // Add JsCast trait for dyn_ref
+use crate::api_request::playlists::fetch_playlists;
 
 #[derive(Default)]
 pub struct SpotifyApp {
@@ -49,6 +50,14 @@ impl eframe::App for SpotifyApp {
                         let token = ACCESS_TOKEN.lock().unwrap().clone().unwrap();
                         spawn_local(async {
                             fetch_saved_tracks(token).await;
+                        });
+                    }
+
+                    if ui.button("View Your Playlists").clicked() {
+                        let token = crate::api_request::token::ACCESS_TOKEN
+                            .lock().unwrap().clone().unwrap_or_default();
+                        wasm_bindgen_futures::spawn_local(async move {
+                            fetch_playlists(token).await;
                         });
                     }
                     
@@ -113,6 +122,7 @@ impl eframe::App for SpotifyApp {
         show_saved_tracks_window(ctx);
         super::settings::show_settings_window(ctx);
         super::collage::show_collage_window(ctx);
+        super::playlists_window::show_playlists_window(ctx);
         
         // Check loading state in a separate scope
         let is_loading = {
