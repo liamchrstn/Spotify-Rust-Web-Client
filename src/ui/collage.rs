@@ -77,7 +77,8 @@ pub fn show_collage_window(ctx: &Context) {
 
             // Add slider for hue shift
             ui.horizontal(|ui| {
-                ui.label("Hue Shift:");
+                ui.label("Starting Hue:")
+                .on_hover_text("Choose the starting color of the rainbow gradient effect");
                 let hue_shift = &mut state.hue_shift;
                 ui.add(egui::Slider::new(hue_shift, 0.0..=360.0).text("degrees").show_value(false));
                 let (r, g, b) = hsv_to_rgb(*hue_shift, 1.0, 1.0);
