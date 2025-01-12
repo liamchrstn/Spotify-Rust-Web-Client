@@ -7,6 +7,21 @@ pub enum ViewMode {
     Grid,
 }
 
+#[derive(Clone, Copy, PartialEq)]
+pub enum GradientDirection {
+    Diagonal,
+    Horizontal,
+    Vertical,
+}
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum StartingCorner {
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight,
+}
+
 pub struct AppState {
     pub collage_image: Option<Vec<u8>>, // Store the generated collage image data
     pub username: Option<String>,
@@ -35,6 +50,8 @@ pub struct AppState {
     pub collage_width: u32,
     pub collage_height: u32,
     pub hue_shift: f32, // Add hue shift field
+    pub gradient_direction: GradientDirection, // Add gradient direction field
+    pub starting_corner: StartingCorner, // Add starting corner field
 }
 
 impl Default for AppState {
@@ -95,6 +112,8 @@ impl Default for AppState {
             collage_width: 1920,
             collage_height: 1080,
             hue_shift: 0.0, // Default hue shift value
+            gradient_direction: GradientDirection::Diagonal, // Default gradient direction
+            starting_corner: StartingCorner::TopLeft, // Default starting corner
         }
     }
 }

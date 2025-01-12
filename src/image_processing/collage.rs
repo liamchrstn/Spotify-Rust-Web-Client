@@ -2,8 +2,9 @@ use image::{DynamicImage, ImageBuffer, RgbaImage};
 use std::cmp::Ordering;
 use super::color_analysis::*;
 use wasm_bindgen::prelude::*;
+use crate::ui::app_state::{GradientDirection, StartingCorner};
 
-pub fn create_collage(images: Vec<DynamicImage>, width: u32, height: u32, color_shift: f32) -> Result<DynamicImage, JsValue> {
+pub fn create_collage(images: Vec<DynamicImage>, width: u32, height: u32, color_shift: f32, gradient_direction: GradientDirection, starting_corner: StartingCorner) -> Result<DynamicImage, JsValue> {
     // Separate images into black, white, desaturated, and colored based on thresholds
     let mut black_images = Vec::new();
     let mut white_images = Vec::new();
@@ -74,17 +75,76 @@ pub fn create_collage(images: Vec<DynamicImage>, width: u32, height: u32, color_
 
     let mut collage: RgbaImage = ImageBuffer::new(collage_width, collage_height);
 
-    // Generate diagonal order positions
+    // Generate positions based on gradient direction and starting corner
     let mut positions = Vec::new();
-    for s in 0..(best_rows + best_cols - 1) {
-        for row in 0..best_rows {
-            if s >= row {
-                let col = s - row;
-                if col < best_cols {
+    match gradient_direction {
+        GradientDirection::Diagonal => {
+            for s in 0..(best_rows + best_cols - 1) {
+                for row in 0..best_rows {
+                    if s >= row {
+                        let col = s - row;
+                        if col < best_cols {
+                            positions.push((col, row));
+                        }
+                    }
+                }
+            }
+        },
+        GradientDirection::Vertical => { // Swapped with Horizontal
+            for row in 0..best_rows {
+                for col in 0..best_cols {
                     positions.push((col, row));
                 }
             }
-        }
+        },
+        GradientDirection::Horizontal => { // Swapped with Vertical
+            for col in 0..best_cols {
+                for row in 0..best_rows {
+                    positions.push((col, row));
+                }
+            }
+        },
+    }
+
+    // Adjust positions based on starting corner or side
+    match gradient_direction {
+        GradientDirection::Diagonal => match starting_corner {
+            StartingCorner::TopLeft => {},
+            StartingCorner::TopRight => {
+                for pos in &mut positions {
+                    pos.0 = best_cols - 1 - pos.0;
+                }
+            },
+            StartingCorner::BottomLeft => {
+                for pos in &mut positions {
+                    pos.1 = best_rows - 1 - pos.1;
+                }
+            },
+            StartingCorner::BottomRight => {
+                for pos in &mut positions {
+                    pos.0 = best_cols - 1 - pos.0;
+                    pos.1 = best_rows - 1 - pos.1;
+                }
+            },
+        },
+        GradientDirection::Vertical => match starting_corner { // Swapped with Horizontal
+            StartingCorner::TopLeft => {}, // Left
+            StartingCorner::TopRight => { // Right
+                for pos in &mut positions {
+                    pos.0 = best_cols - 1 - pos.0;
+                }
+            },
+            _ => {},
+        },
+        GradientDirection::Horizontal => match starting_corner { // Swapped with Vertical
+            StartingCorner::TopLeft => {}, // Top
+            StartingCorner::BottomLeft => { // Bottom
+                for pos in &mut positions {
+                    pos.1 = best_rows - 1 - pos.1;
+                }
+            },
+            _ => {},
+        },
     }
 
     // If there are more images than positions, expand the grid

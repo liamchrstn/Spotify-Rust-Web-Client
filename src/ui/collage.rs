@@ -1,4 +1,4 @@
-use super::app_state::APP_STATE;
+use super::app_state::{APP_STATE, GradientDirection, StartingCorner}; // Import enums from app_state
 use crate::image_processing::collage::create_collage;
 use egui::{Context, Color32, ColorImage, load::SizedTexture, ProgressBar}; // Add Color32
 use wasm_bindgen_futures::spawn_local;
@@ -56,7 +56,7 @@ fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
 
 pub fn show_collage_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
-    if (!state.collage_window_open) {
+    if !state.collage_window_open {
         return;
     }
 
@@ -86,6 +86,41 @@ pub fn show_collage_window(ctx: &Context) {
                 ui.colored_label(color, format!("{:.0}°", hue_shift));
             });
 
+            // Add options for gradient direction
+            ui.horizontal(|ui| {
+                ui.label("Gradient Direction:");
+                ui.selectable_value(&mut state.gradient_direction, GradientDirection::Diagonal, "Diagonal");
+                ui.selectable_value(&mut state.gradient_direction, GradientDirection::Horizontal, "Horizontal");
+                ui.selectable_value(&mut state.gradient_direction, GradientDirection::Vertical, "Vertical");
+            });
+
+            // Conditionally show options for starting corner or side
+            match state.gradient_direction {
+                GradientDirection::Diagonal => {
+                    ui.horizontal(|ui| {
+                        ui.label("Starting Corner:");
+                        ui.selectable_value(&mut state.starting_corner, StartingCorner::TopLeft, "Top Left");
+                        ui.selectable_value(&mut state.starting_corner, StartingCorner::TopRight, "Top Right");
+                        ui.selectable_value(&mut state.starting_corner, StartingCorner::BottomLeft, "Bottom Left");
+                        ui.selectable_value(&mut state.starting_corner, StartingCorner::BottomRight, "Bottom Right");
+                    });
+                },
+                GradientDirection::Horizontal => {
+                    ui.horizontal(|ui| {
+                        ui.label("Starting Side:");
+                        ui.selectable_value(&mut state.starting_corner, StartingCorner::TopLeft, "Top");
+                        ui.selectable_value(&mut state.starting_corner, StartingCorner::TopRight, "Bottom");
+                    });
+                },
+                GradientDirection::Vertical => {
+                    ui.horizontal(|ui| {
+                        ui.label("Starting Side:");
+                        ui.selectable_value(&mut state.starting_corner, StartingCorner::TopLeft, "Left");
+                        ui.selectable_value(&mut state.starting_corner, StartingCorner::BottomLeft, "Right");
+                    });
+                },
+            }
+
             // Show preview if we have a generated image
             if let Some(image_data) = &state.collage_image {
                 if ui.button("Download Collage").clicked() {
@@ -114,13 +149,15 @@ pub fn show_collage_window(ctx: &Context) {
             }
             
             // Only show generate button when not loading
-            if (!state.collage_loading) {
-                if (ui.button("Generate New Collage").clicked()) {
+            if !state.collage_loading {
+                if ui.button("Generate New Collage").clicked() {
                     // Clone tracks for async closure
                     let tracks = state.saved_tracks.clone();
                     let width = state.collage_width;
                     let height = state.collage_height;
                     let hue_shift = state.hue_shift; // Get hue shift value from state
+                    let gradient_direction = state.gradient_direction;
+                    let starting_corner = state.starting_corner;
                     
                     // Set collage_loading to true
                     state.collage_loading = true;
@@ -152,7 +189,7 @@ pub fn show_collage_window(ctx: &Context) {
                         }
                         
                         // Only proceed if we have images
-                        if (images.is_empty()) {
+                        if images.is_empty() {
                             let mut state = APP_STATE.lock().unwrap();
                             state.progress = 0.0;
                             state.collage_loading = false; // Reset collage_loading
@@ -160,7 +197,7 @@ pub fn show_collage_window(ctx: &Context) {
                         }
                         
                         // Create collage with downloaded images
-                        if let Ok(collage) = create_collage(images, width, height, hue_shift) {
+                        if let Ok(collage) = create_collage(images, width, height, hue_shift, gradient_direction, starting_corner) {
                             // Create a cursor to write the image to
                             let mut cursor = Cursor::new(Vec::new());
                             if let Ok(_) = collage.write_to(&mut cursor, image::ImageFormat::Png) {
@@ -178,7 +215,7 @@ pub fn show_collage_window(ctx: &Context) {
                 }
             }
             
-            if (state.collage_loading) {
+            if state.collage_loading {
                 let progress_text = format!("{}/{}", (state.progress * state.saved_tracks.len() as f32).round() as i32, state.saved_tracks.len());
                 ui.add(ProgressBar::new(state.progress).animate(true).text(progress_text));
             }
