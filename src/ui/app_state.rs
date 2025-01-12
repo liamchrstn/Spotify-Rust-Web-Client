@@ -15,14 +15,14 @@ pub struct AppState {
     pub loaded_tracks_count: i32, // Number of tracks currently loaded
     pub show_tracks: bool,
     pub tracks_window_open: bool,
-    pub player_window_open: bool, 
+    pub player_window_open: bool,
     pub tracks_window_size: (f32, f32),
     pub total_tracks: Option<i32>,
     pub is_loading: bool,  // Add loading state
     pub view_mode: ViewMode,
     pub search_text: String,
     pub settings_window_open: bool,
-    pub player_name: String,  // Add this field
+    pub player_name: String,
     pub settings_window_locked: bool,
     pub settings_window_pos: (f32, f32), // Default position for Settings window
     pub liked_songs_window_pos: (f32, f32), // Default position for Liked Songs window
@@ -30,6 +30,7 @@ pub struct AppState {
     pub collage_window_open: bool,
     pub collage_window_pos: (f32, f32), // Default position for Collage window
     pub loading_message: String, // Status message for loading operations
+    pub progress: f32, // Progress for the progress bar
 }
 
 impl Default for AppState {
@@ -85,6 +86,7 @@ impl Default for AppState {
             collage_window_open: false,
             collage_window_pos: (650.0, 30.0),
             loading_message: String::new(),
+            progress: 0.0,
         }
     }
 }

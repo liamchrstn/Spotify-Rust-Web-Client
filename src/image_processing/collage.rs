@@ -109,7 +109,7 @@ pub fn create_collage(images: Vec<DynamicImage>, width: u32, height: u32, color_
             let x = (*col * tile_size) as i64;
             let y = (*row * tile_size) as i64;
 
-            let resized = img.resize(tile_size, tile_size, image::imageops::FilterType::Lanczos3).to_rgba8();
+            let resized = img.resize_exact(tile_size, tile_size, image::imageops::FilterType::Nearest).to_rgba8();
             image::imageops::overlay(&mut collage, &resized, x, y);
         }
     }
