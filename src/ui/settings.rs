@@ -5,7 +5,7 @@ use crate::api_request::token::SDK_STATUS;
 
 pub fn show_settings_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
-    if !state.settings_window_open {
+    if (!state.settings_window_open) {
         return;
     }
 
@@ -14,7 +14,7 @@ pub fn show_settings_window(ctx: &Context) {
     static mut ORIGINAL_NAME: String = String::new();
 
     unsafe {
-        if !SETTINGS_INITIALIZED {
+        if (!SETTINGS_INITIALIZED) {
             PLAYER_NAME = state.player_name.clone();
             ORIGINAL_NAME = state.player_name.clone();
             SETTINGS_INITIALIZED = true;
@@ -63,6 +63,14 @@ pub fn show_settings_window(ctx: &Context) {
                 state.tracks_window_open = false;
                 state.player_window_open = false;
                 state.settings_window_open = false;
+                state.playlists_window_open = false;
+                state.playlist_tracks_window_open = false;
+                state.collage_window_open = false;
+                state.show_tracks = false;
+                state.show_playlists = false;
+                state.show_playlist_tracks_window = false;
+                // Clear all playlist windows
+                state.playlist_windows.clear();
             }
 
             // Add Reset Window Positions button
@@ -176,14 +184,14 @@ pub fn show_settings_window(ctx: &Context) {
     if let Some(resp) = show_response {
         let rect = resp.response.rect;
         // Only update position if we're not actively resetting
-        if !reset_triggered {
+        if (!reset_triggered) {
             state.settings_window_pos = (rect.min.x, rect.min.y);
         }
     }
 
     state.settings_window_open = settings_open;
 
-    if !settings_open {
+    if (!settings_open) {
         unsafe {
             SETTINGS_INITIALIZED = false;
         }
