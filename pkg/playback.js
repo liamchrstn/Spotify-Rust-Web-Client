@@ -212,30 +212,52 @@ function initializePlayer() {
                     const state = await player.getCurrentState();
                     console.log('Current player state:', state);
                     
-                    if (state) {
-                        // Use SDK for local device
-                        if (state.paused) {
-                            await player.resume();
-                            console.log('Playback resumed via SDK');
-                            set_sdk_status('Playing');
-                        } else {
-                            await player.pause();
-                            console.log('Playback paused via SDK');
-                            set_sdk_status('Paused');
+                    try {
+                        // Check if we have any active playback first
+                        const hasActivePlayback = await wasm.check_active_playback();
+                        
+                        if (!hasActivePlayback) {
+                            console.log('No active playback available');
+                            set_sdk_status('No Active Playback');
+                            window.isPlaying = false;
+                            return;
                         }
-                    } else {
-                        // Use API for remote device
-                        console.log('Using API for remote device control');
-                        const isPlaying = window.isPlaying;
-                        if (isPlaying) {
-                            await wasm.pause_playback();
-                            console.log('Playback paused via API');
-                            set_sdk_status('Paused');
+                
+                        if (state) {
+                            // Use SDK for local device
+                            if (state.paused) {
+                                await player.resume();
+                                console.log('Playback resumed via SDK');
+                                set_sdk_status('Playing');
+                            } else {
+                                await player.pause();
+                                console.log('Playback paused via SDK');
+                                set_sdk_status('Paused');
+                            }
                         } else {
-                            await wasm.resume_playback();
-                            console.log('Playback resumed via API');
-                            set_sdk_status('Playing');
+                            // Use API for remote device
+                            console.log('Using API for remote device control');
+                            const isPlaying = window.isPlaying;
+                            if (isPlaying) {
+                                await wasm.pause_playback();
+                                console.log('Playback paused via API');
+                                set_sdk_status('Paused');
+                            } else {
+                                const success = await wasm.resume_playback();
+                                if (!success) {
+                                    console.log('Failed to resume - no active context');
+                                    set_sdk_status('No Active Context');
+                                    window.isPlaying = false;
+                                    return;
+                                }
+                                console.log('Playback resumed via API');
+                                set_sdk_status('Playing');
+                            }
                         }
+                    } catch (error) {
+                        console.error('Playback control error:', error);
+                        set_sdk_status('Error');
+                        window.isPlaying = false;
                     }
                 };
             } else {
