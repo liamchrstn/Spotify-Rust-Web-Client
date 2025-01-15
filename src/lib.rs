@@ -16,6 +16,10 @@ use eframe::WebRunner;
 use console_error_panic_hook;
 use std::panic;
 
+#[wasm_bindgen]
+pub async fn check_active_playback() -> bool {
+    api_request::spotify_apis::check_active_playback().await
+}
 
 #[wasm_bindgen]
 pub async fn start() -> Result<(), JsValue> {

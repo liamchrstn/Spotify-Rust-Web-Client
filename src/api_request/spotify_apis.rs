@@ -74,3 +74,29 @@ where
         }
     }
 }
+
+// Add this new function
+pub async fn check_active_playback() -> bool {
+    let token = web_sys::window()
+        .and_then(|window| window.local_storage().ok().flatten())
+        .and_then(|storage| storage.get_item("spotify_token").ok().flatten())
+        .unwrap_or_default();
+
+    let client = reqwest::Client::new();
+    let response = client
+        .get("https://api.spotify.com/v1/me/player")
+        .header("Authorization", format!("Bearer {}", token))
+        .send()
+        .await;
+
+    match response {
+        Ok(resp) => {
+            if (resp.status() == 204) {
+                false // No active playback
+            } else {
+                resp.status().is_success()
+            }
+        }
+        Err(_) => false,
+    }
+}
