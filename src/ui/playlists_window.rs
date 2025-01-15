@@ -1,6 +1,6 @@
 use egui::Context;
 use crate::ui::app_state::{APP_STATE, ViewMode};
-use crate::ui::tracks_ui::{show_list_view, show_grid_view, ListViewMode};
+use crate::ui::tracks_ui::{show_list_view, show_grid_view, ListViewMode, render_square_with_image};
 
 pub fn show_playlists_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
@@ -35,15 +35,58 @@ pub fn show_playlists_window(ctx: &Context) {
             });
             ui.add_space(8.0);
 
-            let filtered: Vec<_> = playlists.iter().collect();
+            let filtered: Vec<(String, String, String, String)> = playlists
+                .iter()
+                .map(|(name, owner, image_url, id, total_tracks)| 
+                    (name.clone(), owner.clone(), image_url.clone(), id.clone())
+                )
+                .collect();
+            
+            let references: Vec<&(String, String, String, String)> = filtered.iter().collect();
+
             match view_mode {
                 ViewMode::List => {
                     egui::ScrollArea::vertical().show(ui, |ui| {
-                        show_list_view(ui, &filtered, ListViewMode::Playlists);
+                        for (name, owner, image_url, id, total_tracks) in playlists {
+                            ui.horizontal(|ui| {
+                                render_square_with_image(ui, 40.0, &image_url);
+                                ui.vertical(|ui| {
+                                    ui.horizontal(|ui| {
+                                        ui.label(
+                                            egui::RichText::new(&name)
+                                                .size(16.0)
+                                                .strong()
+                                                .color(ui.visuals().strong_text_color())
+                                        );
+                                        ui.label(
+                                            egui::RichText::new(format!(" • {} tracks", total_tracks))
+                                                .size(14.0)
+                                                .color(ui.visuals().weak_text_color())
+                                        );
+                                    });
+                                    ui.label(
+                                        egui::RichText::new(&owner)
+                                            .size(14.0)
+                                            .color(ui.visuals().weak_text_color())
+                                    );
+                                });
+                            });
+                            ui.add_space(4.0);
+                            ui.separator();
+                            ui.add_space(4.0);
+                        }
                     });
                 },
                 ViewMode::Grid => {
-                    show_grid_view(ui, &filtered, None, playlists.len(), playlists.len() as i32, ListViewMode::Playlists);
+                    let filtered: Vec<(String, String, String, String)> = playlists
+                        .iter()
+                        .map(|(name, owner, image_url, id, total_tracks)| 
+                            (format!("{}\n{} tracks", name, total_tracks), owner.clone(), image_url.clone(), id.clone())
+                        )
+                        .collect();
+                    
+                    let references: Vec<&(String, String, String, String)> = filtered.iter().collect();
+                    show_grid_view(ui, &references, None, playlists.len(), playlists.len() as i32, ListViewMode::Playlists);
                 },
             }
         }

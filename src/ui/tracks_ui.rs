@@ -31,7 +31,7 @@ fn render_default_square(ui: &mut Ui, rect: egui::Rect) {
     );
 }
 
-fn render_square_with_image(ui: &mut Ui, size: f32, image_url: &str) {
+pub fn render_square_with_image(ui: &mut Ui, size: f32, image_url: &str) {
     let (rect, _) = ui.allocate_exact_size([size, size].into(), egui::Sense::hover());
 
     if !image_url.is_empty() {
@@ -51,13 +51,15 @@ pub fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String, String)],
             render_square_with_image(ui, 40.0, image_url);
             
             ui.vertical(|ui| {
-                ui.add(egui::Label::new(
-                    egui::RichText::new(track)
-                        .size(16.0)
-                        .strong()
-                        .color(ui.visuals().strong_text_color())
-                        .text_style(egui::TextStyle::Body)
-                ).wrap());
+                ui.horizontal(|ui| {
+                    ui.add(egui::Label::new(
+                        egui::RichText::new(track)
+                            .size(16.0)
+                            .strong()
+                            .color(ui.visuals().strong_text_color())
+                            .text_style(egui::TextStyle::Body)
+                    ).wrap());
+                });
                 
                 if mode != ListViewMode::Playlists {
                     ui.add(egui::Label::new(
