@@ -111,8 +111,7 @@ pub async fn transfer_playback(device_id: String) {
         .header("Authorization", format!("Bearer {}", token))
         .header("Content-Type", "application/json")
         .json(&serde_json::json!({
-            "device_ids": [device_id],
-            "play": true
+            "device_ids": [device_id]
         }))
         .send()
         .await;
