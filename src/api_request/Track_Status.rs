@@ -342,15 +342,18 @@ pub async fn seek_playback(position_ms: i32) {
 
 #[wasm_bindgen]
 pub async fn play_track(uri: String) {
-    web_sys::console::log_2(&"Playing track:".into(), &uri.clone().into());
+    play_track_with_context(uri, "spotify:user:saved:collection".to_string(), 0).await;
+}
 
-    // Verify URI format
+#[wasm_bindgen]
+pub async fn play_track_with_context(uri: String, context_uri: String, position: usize) {
+    web_sys::console::log_3(&"Playing track:".into(), &uri.clone().into(), &context_uri.clone().into());
+
     if !uri.starts_with("spotify:track:") {
         web_sys::console::log_1(&"Invalid track URI format".into());
         return;
     }
 
-    // Get token once at the start
     let token = match get_token() {
         Some(token) => token,
         None => {
@@ -359,57 +362,11 @@ pub async fn play_track(uri: String) {
         }
     };
 
-    let window = web_sys::window().expect("no global window exists");
-    
-    // Check and activate device if needed
-    web_sys::console::log_1(&"Checking for active devices...".into());
-    has_active_devices().await;
+    // Device activation code...
+    // ...existing code...
 
-    // Wait a bit for device check to complete
-    gloo_timers::future::TimeoutFuture::new(500).await;
-
-    // Get first available device and activate it
-    if let Ok(devices) = js_sys::Reflect::get(&window, &"availableDevices".into()) {
-        if let Some(devices_array) = devices.dyn_ref::<js_sys::Array>() {
-            web_sys::console::log_2(&"Found devices:".into(), &devices_array.length().into());
-            if devices_array.length() > 0 {
-                if let Ok(device) = js_sys::Reflect::get(&devices_array.get(0), &"id".into()) {
-                    if let Some(device_id) = device.as_string() {
-                        web_sys::console::log_2(&"Activating device:".into(), &device_id.clone().into());
-                        activate_device(device_id).await;
-                        
-                        // Wait for device activation
-                        gloo_timers::future::TimeoutFuture::new(1000).await;
-                    }
-                }
-            } else {
-                web_sys::console::log_1(&"No devices found".into());
-                return;
-            }
-        }
-    }
-
-    // Get user ID for collection URI
-    let user_id = match get_user_id().await {
-        Some(id) => id,
-        None => {
-            web_sys::console::log_1(&"Could not get user ID".into());
-            return;
-        }
-    };
-
-    // Find track position in saved tracks
-    let offset = {
-        let state = crate::ui::APP_STATE.lock().unwrap();
-        state.saved_tracks.iter()
-            .position(|(_, _, _, track_uri)| track_uri == &uri)
-            .unwrap_or(0)
-    };
-
-    // Create client and attempt to play track with context
     let client = Client::new();
     web_sys::console::log_1(&"Sending play request with context...".into());
-    let context_uri = format!("spotify:user:{}:collection", user_id);
     let response = client
         .put("https://api.spotify.com/v1/me/player/play")
         .header("Authorization", format!("Bearer {}", token))
@@ -417,7 +374,7 @@ pub async fn play_track(uri: String) {
         .json(&serde_json::json!({
             "context_uri": context_uri,
             "offset": {
-                "position": offset
+                "position": position
             }
         }))
         .send()

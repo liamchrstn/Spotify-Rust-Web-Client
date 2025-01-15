@@ -99,7 +99,15 @@ pub fn show_playlists_window(ctx: &Context) {
                         .collect();
                     
                     let references: Vec<&(String, String, String, String)> = filtered.iter().collect();
-                    show_grid_view(ui, &references, None, playlists.len(), playlists.len() as i32, ListViewMode::Playlists);
+                    show_grid_view(
+                        ui, 
+                        &references, 
+                        None, 
+                        playlists.len(), 
+                        playlists.len() as i32, 
+                        ListViewMode::Playlists,
+                        None  // Add the missing playlist_id argument
+                    );
                 },
             }
         }

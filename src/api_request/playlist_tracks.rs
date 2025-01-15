@@ -47,7 +47,14 @@ pub async fn fetch_playlist_tracks(playlist_id: String, token: String) {
                     .collect::<Vec<_>>();
 
                 let mut state = APP_STATE.lock().unwrap();
-                state.playlist_windows.push((playlist_id, playlist_name, tracks_data, ViewMode::List, true, (500.0, 100.0)));
+                state.playlist_windows.push((
+                    playlist_id,  // Store the actual playlist ID
+                    playlist_name, 
+                    tracks_data, 
+                    ViewMode::List, 
+                    true, 
+                    (500.0, 100.0)
+                ));
                 state.is_loading = false;
             }
         } else {

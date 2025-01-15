@@ -23,7 +23,7 @@ pub fn show_playlist_tracks_windows(ctx: &Context) {
                 match view_mode {
                     ViewMode::List => {
                         egui::ScrollArea::vertical().show(ui, |ui| {
-                            show_list_view(ui, &tracks.iter().collect::<Vec<_>>(), ListViewMode::Tracks);
+                            show_list_view(ui, &tracks.iter().collect::<Vec<_>>(), ListViewMode::Tracks, Some(&playlist_id));
                         });
                     }
                     ViewMode::Grid => {
@@ -33,7 +33,8 @@ pub fn show_playlist_tracks_windows(ctx: &Context) {
                             None,
                             tracks.len(),
                             tracks.len() as i32,
-                            ListViewMode::Tracks
+                            ListViewMode::Tracks,
+                            Some(&playlist_id)
                         );
                     }
                 }
