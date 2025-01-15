@@ -48,4 +48,7 @@ pub fn show_playlist_tracks_windows(ctx: &Context) {
             }
         }
     }
+    // Ensure the state is updated correctly to allow reopening
+    let mut state = APP_STATE.lock().unwrap();
+    state.playlist_windows.retain(|(_, _, _, _, window_open, _)| *window_open);
 }
