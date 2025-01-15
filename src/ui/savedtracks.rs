@@ -86,7 +86,6 @@ pub fn show_saved_tracks_window(ctx: &Context) {
             match view_mode {
                 ViewMode::List => {
                     egui::ScrollArea::vertical()
-                        .stick_to_bottom(true)
                         .show(ui, |ui| {
                             show_list_view(ui, &filtered_tracks, ListViewMode::Tracks);
 
