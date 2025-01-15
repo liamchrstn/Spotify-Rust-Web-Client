@@ -7,12 +7,44 @@ pub enum ListViewMode {
     Playlists,
 }
 
+fn render_default_square(ui: &mut Ui, size: f32) {
+    let (rect, _) = ui.allocate_exact_size([size, size].into(), egui::Sense::hover());
+    
+    // Draw grey background
+    ui.painter().rect_filled(
+        rect,
+        0.0,
+        egui::Color32::from_gray(128),
+    );
+
+    // Draw music note icon
+    let font_size = size * 0.4; // Make icon 40% of square size
+    let text = egui::RichText::new("♫")
+        .size(font_size)
+        .color(egui::Color32::from_gray(200));
+    
+    // Center the icon in the square
+    ui.painter().text(
+        rect.center(),
+        egui::Align2::CENTER_CENTER,
+        text.text(),
+        egui::FontId::proportional(font_size),
+        egui::Color32::from_gray(200),
+    );
+}
+
 pub fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String, String)], mode: ListViewMode) {
     for (track, artists, image_url, uri_or_id) in tracks {
         let row_response = ui.horizontal(|ui| {
-            // Add album art
-            if let Some(image) = get_or_load_image(ui.ctx(), image_url) {
-                ui.add(image.fit_to_exact_size([40.0, 40.0].into()));
+            // Add album art or default grey square
+            if !image_url.is_empty() {
+                if let Some(image) = get_or_load_image(ui.ctx(), image_url) {
+                    ui.add(image.fit_to_exact_size([40.0, 40.0].into()));
+                } else {
+                    render_default_square(ui, 40.0);
+                }
+            } else {
+                render_default_square(ui, 40.0);
             }
             
             ui.vertical(|ui| {
@@ -85,9 +117,15 @@ pub fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)],
                                     ui.scope(|ui| {
                                         draw_vlines(ui, 100.0, col > 0, |ui| {
                                             ui.horizontal(|ui| {
-                                                // Add album art
-                                                if let Some(image) = get_or_load_image(ui.ctx(), image_url) {
-                                                    ui.add(image.fit_to_exact_size([80.0, 80.0].into()));
+                                                // Add album art or default grey square
+                                                if !image_url.is_empty() {
+                                                    if let Some(image) = get_or_load_image(ui.ctx(), image_url) {
+                                                        ui.add(image.fit_to_exact_size([80.0, 80.0].into()));
+                                                    } else {
+                                                        render_default_square(ui, 80.0);
+                                                    }
+                                                } else {
+                                                    render_default_square(ui, 80.0);
                                                 }
                                                 ui.add_space(8.0);
                                                 ui.vertical(|ui| {
