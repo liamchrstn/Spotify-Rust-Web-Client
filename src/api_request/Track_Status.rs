@@ -431,6 +431,7 @@ pub async fn play_track(uri: String) {
     }).await;
 }
 
+#[wasm_bindgen]
 pub async fn resume_playback() {
     web_sys::console::log_1(&"Resuming playback via API...".into());
     let token = match get_token() {
