@@ -78,7 +78,7 @@ async function updatePlaybackState() {
         }
 
         // Only make API call if we're not the active device
-        console.log('Falling back to API for remote device state');
+        //console.log('Falling back to API for remote device state');
         lastUpdateTime = Date.now();
         await wasm.get_current_playback();
         lastUpdateSuccess = true;
@@ -91,7 +91,15 @@ async function updatePlaybackState() {
     }
 }
 
+// Add at the top of the file after imports
+let isInitializing = false;
+
 function initializePlayer() {
+    if (isInitializing) {
+        console.log('Player initialization already in progress, skipping...');
+        return;
+    }
+
     const token = localStorage.getItem('spotify_token');
     if (!token) {
         console.warn('No token available for player initialization');
@@ -99,14 +107,19 @@ function initializePlayer() {
         return;
     }
 
-    // Disconnect existing player if it exists
+    isInitializing = true;
+    console.log('Starting player initialization...');
+
+    // Cleanup existing player more thoroughly
     if (window.spotifyPlayer) {
+        console.log('Cleaning up existing player...');
         window.spotifyPlayer.disconnect();
+        window.spotifyPlayer = null;
     }
 
     // Get custom player name from localStorage or use default
     const playerName = localStorage.getItem('player_name') || 'Web Playback SDK Quick Start Player';
-    console.log('Initializing player with name:', playerName);
+    console.log('Creating new player instance with name:', playerName);
 
     const player = new Spotify.Player({
         name: playerName,
@@ -161,6 +174,7 @@ function initializePlayer() {
     // Connect to the player!
     player.connect()
         .then(async success => {
+            isInitializing = false;  // Reset flag regardless of outcome
             if (success) {
                 console.log('Successfully connected to Spotify Player');
                 set_sdk_status('Connected');
@@ -230,6 +244,7 @@ function initializePlayer() {
             }
         })
         .catch(error => {
+            isInitializing = false;  // Reset flag on error
             console.error('Error connecting to Spotify Player:', error);
             set_sdk_status('Connection Error');
         });
