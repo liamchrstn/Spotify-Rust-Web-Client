@@ -87,7 +87,7 @@ pub fn show_saved_tracks_window(ctx: &Context) {
                 ViewMode::List => {
                     egui::ScrollArea::vertical()
                         .show(ui, |ui| {
-                            show_list_view(ui, &filtered_tracks, ListViewMode::Tracks);
+                            show_list_view(ui, &filtered_tracks, ListViewMode::Tracks, None);
 
                             // Add Load More button only at the bottom after showing all tracks
                             if let Some(total) = total_tracks {
@@ -116,7 +116,8 @@ pub fn show_saved_tracks_window(ctx: &Context) {
                     total_tracks,
                     state.saved_tracks.len(),
                     state.loaded_tracks_count,
-                    ListViewMode::Tracks
+                    ListViewMode::Tracks,
+                    None
                 ),
             }
         });
