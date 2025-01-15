@@ -48,7 +48,7 @@ pub fn show_playlists_window(ctx: &Context) {
                 ViewMode::List => {
                     egui::ScrollArea::vertical().show(ui, |ui| {
                         for (name, owner, image_url, id, total_tracks) in playlists {
-                            ui.horizontal(|ui| {
+                            let row_response = ui.horizontal(|ui| {
                                 render_square_with_image(ui, 40.0, &image_url);
                                 ui.vertical(|ui| {
                                     ui.horizontal(|ui| {
@@ -70,7 +70,20 @@ pub fn show_playlists_window(ctx: &Context) {
                                             .color(ui.visuals().weak_text_color())
                                     );
                                 });
-                            });
+                            }).response;
+
+                            // Make the row clickable
+                            if row_response.interact(egui::Sense::click()).clicked() {
+                                let id = id.clone();
+                                let token = web_sys::window()
+                                    .and_then(|window| window.local_storage().ok().flatten())
+                                    .and_then(|storage| storage.get_item("spotify_token").ok().flatten())
+                                    .unwrap_or_default();
+                                
+                                wasm_bindgen_futures::spawn_local(async move {
+                                    crate::api_request::playlist_tracks::fetch_playlist_tracks(id, token).await;
+                                });
+                            }
                             ui.add_space(4.0);
                             ui.separator();
                             ui.add_space(4.0);
