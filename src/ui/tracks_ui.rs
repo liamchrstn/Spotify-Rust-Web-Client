@@ -2,6 +2,7 @@ use egui::Ui;
 use egui_extras::{TableBuilder, Column};
 use crate::api_request::imagerender::get_or_load_image;
 
+#[derive(PartialEq)]
 pub enum ListViewMode {
     Tracks,
     Playlists,
@@ -58,11 +59,13 @@ pub fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String, String)],
                         .text_style(egui::TextStyle::Body)
                 ).wrap());
                 
-                ui.add(egui::Label::new(
-                    egui::RichText::new(artists)
-                        .size(14.0)
-                        .color(ui.visuals().weak_text_color())
-                ).wrap());
+                if mode != ListViewMode::Playlists {
+                    ui.add(egui::Label::new(
+                        egui::RichText::new(artists)
+                            .size(14.0)
+                            .color(ui.visuals().weak_text_color())
+                    ).wrap());
+                }
             });
         }).response;
 
@@ -131,13 +134,15 @@ pub fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)],
                                                                 .text_style(egui::TextStyle::Body)
                                                         ).wrap()
                                                     );
-                                                    ui.add(
-                                                        egui::Label::new(
-                                                            egui::RichText::new(artists)
-                                                                .size(14.0)
-                                                                .color(ui.visuals().weak_text_color())
-                                                        ).wrap()
-                                                    );
+                                                    if mode != ListViewMode::Playlists {
+                                                        ui.add(
+                                                            egui::Label::new(
+                                                                egui::RichText::new(artists)
+                                                                    .size(14.0)
+                                                                    .color(ui.visuals().weak_text_color())
+                                                            ).wrap()
+                                                        );
+                                                    }
                                                 });
                                                 
                                                 // Make the cell clickable
