@@ -9,16 +9,15 @@ where
 {
     match response {
         Ok(response) => {
-            web_sys::console::log_2(&"Empty response status:".into(), &response.status().as_u16().into());
-            if response.status() == 401 {
+            let status = response.status();
+            if status == 401 {
                 web_sys::console::log_1(&"Unauthorized, clearing token".into());
                 clear_token_and_redirect();
-            } else if response.status().is_success() {
-                web_sys::console::log_1(&"Empty response success".into());
+            } else if status.is_success() {
                 success_handler();
             } else {
-                web_sys::console::log_2(&"Empty response error:".into(), &response.status().as_u16().into());
-                log_error(&format!("Failed to execute command: {:?}", response.status()));
+                web_sys::console::log_2(&"Empty response error:".into(), &status.as_u16().into());
+                log_error(&format!("Failed to execute command: {:?}", status));
             }
         }
         Err(err) => {
@@ -46,16 +45,15 @@ where
 
     match response {
         Ok(response) => {
-            web_sys::console::log_2(&"API response status:".into(), &response.status().as_u16().into());
-            if response.status() == 401 {
+            let status = response.status();
+            if status == 401 {
                 web_sys::console::log_1(&"Unauthorized, clearing token".into());
                 clear_token_and_redirect();
                 set_default_state();
-            } else if response.status() == 204 {
-                web_sys::console::log_1(&"No content response".into());
+            } else if status == 204 {
+                web_sys::console::log_2(&"No content response:".into(), &status.as_u16().into());
                 set_default_state();
-            } else if response.status().is_success() {
-                web_sys::console::log_1(&"Successful response".into());
+            } else if status.is_success() {
                 match response.json::<T>().await {
                     Ok(data) => success_handler(data),
                     Err(err) => {
@@ -65,7 +63,8 @@ where
                     }
                 }
             } else {
-                log_error(&format!("Failed to fetch data: {:?}", response.status()));
+                web_sys::console::log_2(&"API error:".into(), &status.as_u16().into());
+                log_error(&format!("Failed to fetch data: {:?}", status));
                 set_default_state();
             }
         }
