@@ -28,7 +28,8 @@ pub async fn fetch_playlists(token: String) {
                         .unwrap_or("")
                         .to_string();
                     let id = item["id"].as_str().unwrap_or("").to_string();
-                    playlists_data.push((name, owner, image_url, id));
+                    let total_tracks = item["tracks"]["total"].as_i64().unwrap_or(0) as i32;
+                    playlists_data.push((name, owner, image_url, id, total_tracks));
                 }
                 let mut state = APP_STATE.lock().unwrap();
                 state.playlists = playlists_data;

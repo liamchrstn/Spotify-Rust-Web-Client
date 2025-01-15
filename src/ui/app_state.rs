@@ -53,7 +53,7 @@ pub struct AppState {
     pub hue_shift: f32, // Add hue shift field
     pub gradient_direction: GradientDirection, // Add gradient direction field
     pub starting_corner: StartingCorner, // Add starting corner field
-    pub playlists: Vec<(String, String, String, String)>, // (playlist name, owner, image url, id)
+    pub playlists: Vec<(String, String, String, String, i32)>, // (playlist name, owner, image url, id, total tracks)
     pub show_playlists: bool,
     pub playlists_window_open: bool,
     pub playlists_window_size: (f32, f32),
