@@ -46,7 +46,7 @@ pub fn render_square_with_image(ui: &mut Ui, size: f32, image_url: &str) {
 }
 
 // Add a new parameter to pass playlist_id
-pub fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String, String)], mode: ListViewMode, playlist_id: Option<&str>) {
+pub fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String, String)], mode: ListViewMode, playlist_id: Option<&str>, user_id: &str) {
     for (track, artists, image_url, uri_or_id) in tracks {
         let row_response = ui.horizontal(|ui| {
             render_square_with_image(ui, 40.0, image_url);
@@ -80,7 +80,7 @@ pub fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String, String)],
                     let context_uri = if let Some(id) = playlist_id {
                         format!("spotify:playlist:{}", id)
                     } else {
-                        "spotify:user:saved:collection".to_string()
+                        format!("spotify:user:{}:collection", user_id)
                     };
                     let position = tracks.iter().position(|(_, _, _, u)| u == uri_or_id);
                     wasm_bindgen_futures::spawn_local(async move {
@@ -108,7 +108,7 @@ pub fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String, String)],
 }
 
 // Update grid view similarly
-pub fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)], total_tracks: Option<i32>, saved_tracks_len: usize, loaded_tracks_count: i32, mode: ListViewMode, playlist_id: Option<&str>) {
+pub fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)], total_tracks: Option<i32>, saved_tracks_len: usize, loaded_tracks_count: i32, mode: ListViewMode, playlist_id: Option<&str>, user_id: &str) {
     let available_width = ui.available_width();
     let column_width = (available_width / 3.0).max(100.0) - 10.0; // Add padding
     
@@ -166,7 +166,7 @@ pub fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)],
                                                             let context_uri = if let Some(id) = playlist_id {
                                                                 format!("spotify:playlist:{}", id)
                                                             } else {
-                                                                "spotify:user:saved:collection".to_string()
+                                                                format!("spotify:user:{}:collection", user_id)
                                                             };
                                                             let position = tracks.iter().position(|(_, _, _, u)| u == uri_or_id);
                                                             wasm_bindgen_futures::spawn_local(async move {

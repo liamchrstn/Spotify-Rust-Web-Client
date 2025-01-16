@@ -14,7 +14,8 @@ pub fn show_saved_tracks_window(ctx: &Context) {
     let view_mode = state.view_mode;
     let mut window_size = state.tracks_window_size;
     let mut tracks_window_open = state.tracks_window_open;
-    
+    let user_id = state.user_id.clone().unwrap_or_default(); // Convert to String
+
     let window = egui::Window::new("Liked Songs")
         .open(&mut tracks_window_open)
         .current_pos([
@@ -87,7 +88,7 @@ pub fn show_saved_tracks_window(ctx: &Context) {
                 ViewMode::List => {
                     egui::ScrollArea::vertical()
                         .show(ui, |ui| {
-                            show_list_view(ui, &filtered_tracks, ListViewMode::Tracks, None);
+                            show_list_view(ui, &filtered_tracks, ListViewMode::Tracks, None, &user_id);
 
                             // Add Load More button only at the bottom after showing all tracks
                             if let Some(total) = total_tracks {
@@ -117,7 +118,8 @@ pub fn show_saved_tracks_window(ctx: &Context) {
                     state.saved_tracks.len(),
                     state.loaded_tracks_count,
                     ListViewMode::Tracks,
-                    None
+                    None,
+                    &user_id
                 ),
             }
         });

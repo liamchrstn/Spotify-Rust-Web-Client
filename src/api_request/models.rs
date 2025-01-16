@@ -39,6 +39,7 @@ pub struct SavedTracksResponse {
 #[derive(Deserialize)]
 pub struct UserProfile {
     pub display_name: Option<String>,
+    pub id: Option<String>, // Add this new field
 }
 
 #[derive(Serialize, Deserialize)]
