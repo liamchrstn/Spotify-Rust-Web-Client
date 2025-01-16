@@ -65,6 +65,7 @@ pub struct AppState {
     pub playlist_tracks_window_open: bool,
     pub playlist_tracks_window_pos: (f32, f32),
     pub playlist_windows: Vec<(String, String, Vec<(String, String, String, String)>, ViewMode, bool, (f32, f32))>, // Add this new field
+    pub user_id: Option<String>, // Add this new field
 }
 
 impl Default for AppState {
@@ -140,6 +141,7 @@ impl Default for AppState {
             playlist_tracks_window_open: false,
             playlist_tracks_window_pos: (500.0, 100.0),
             playlist_windows: Vec::new(), // Initialize the new field
+            user_id: None, // Initialize the new field
         }
     }
 }
@@ -163,4 +165,14 @@ pub static APP_STATE: Lazy<Mutex<AppState>> = Lazy::new(|| Mutex::new(AppState::
 pub fn set_username(name: String) {
     let mut state = APP_STATE.lock().unwrap();
     state.username = Some(name);
+}
+
+pub fn get_user_id_from_state() -> Option<String> {
+    let state = APP_STATE.lock().unwrap();
+    state.user_id.clone()
+}
+
+pub fn set_user_id(id: String) {
+    let mut state = APP_STATE.lock().unwrap();
+    state.user_id = Some(id);
 }

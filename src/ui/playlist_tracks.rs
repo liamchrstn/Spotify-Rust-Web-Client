@@ -11,6 +11,7 @@ pub async fn fetch_playlist_tracks(playlist_id: String, token: String) {
 pub fn show_playlist_tracks_windows(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
     let playlist_windows = state.playlist_windows.clone();
+    let user_id = state.user_id.clone().unwrap_or_default(); // Convert to String
     drop(state);
 
     for (playlist_id, playlist_name, tracks, view_mode, window_open, window_pos) in playlist_windows {
@@ -23,7 +24,7 @@ pub fn show_playlist_tracks_windows(ctx: &Context) {
                 match view_mode {
                     ViewMode::List => {
                         egui::ScrollArea::vertical().show(ui, |ui| {
-                            show_list_view(ui, &tracks.iter().collect::<Vec<_>>(), ListViewMode::Tracks, Some(&playlist_id));
+                            show_list_view(ui, &tracks.iter().collect::<Vec<_>>(), ListViewMode::Tracks, Some(&playlist_id), &user_id);
                         });
                     }
                     ViewMode::Grid => {
@@ -34,7 +35,8 @@ pub fn show_playlist_tracks_windows(ctx: &Context) {
                             tracks.len(),
                             tracks.len() as i32,
                             ListViewMode::Tracks,
-                            Some(&playlist_id)
+                            Some(&playlist_id),
+                            &user_id
                         );
                     }
                 }

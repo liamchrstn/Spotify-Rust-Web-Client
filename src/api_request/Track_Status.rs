@@ -4,6 +4,7 @@ use crate::api_request::spotify_apis::{handle_response, handle_empty_response};
 use crate::api_request::token::get_token;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
+use crate::ui::get_user_id_from_state;
 
 // Fetches the current playback state from Spotify and updates the window state
 #[wasm_bindgen]
@@ -121,45 +122,6 @@ pub async fn transfer_playback(device_id: String) {
     }).await;
 }
 
-async fn get_user_id() -> Option<String> {
-    web_sys::console::log_1(&"Getting user ID...".into());
-    let token = match get_token() {
-        Some(token) => token,
-        None => {
-            web_sys::console::log_1(&"No token available for user profile".into());
-            return None;
-        }
-    };
-    let client = Client::new();
-    let response = client
-        .get("https://api.spotify.com/v1/me")
-        .header("Authorization", format!("Bearer {}", token))
-        .send()
-        .await
-        .ok()?;
-
-    if !response.status().is_success() {
-        web_sys::console::log_1(&"Failed to get user profile".into());
-        return None;
-    }
-
-    #[derive(serde::Deserialize)]
-    struct User {
-        id: String,
-    }
-
-    let user = match response.json::<User>().await {
-        Ok(u) => u,
-        Err(e) => {
-            web_sys::console::log_2(&"Failed to parse user profile:".into(), &e.to_string().into());
-            return None;
-        }
-    };
-    
-    web_sys::console::log_2(&"Found user ID:".into(), &user.id.clone().into());
-    Some(user.id)
-}
-
 #[wasm_bindgen]
 pub async fn start_playback(device_id: String) {
     web_sys::console::log_2(&"Starting playback for device:".into(), &device_id.clone().into());
@@ -176,7 +138,7 @@ pub async fn start_playback(device_id: String) {
 
     // Get user ID for collection URI
     web_sys::console::log_1(&"Device ready, getting user collection...".into());
-    let user_id = match get_user_id().await {
+    let user_id = match get_user_id_from_state() {
         Some(id) => id,
         None => {
             web_sys::console::log_1(&"Could not get user ID".into());
@@ -341,8 +303,8 @@ pub async fn seek_playback(position_ms: i32) {
 }
 
 #[wasm_bindgen]
-pub async fn play_track(uri: String) {
-    play_track_with_context(uri, "spotify:user:saved:collection".to_string(), 0).await;
+pub async fn play_track(uri: String, user_id: String) {
+    play_track_with_context(uri, format!("spotify:user:{}:collection", user_id).to_string(), 0).await;
 }
 
 #[wasm_bindgen]
@@ -362,8 +324,7 @@ pub async fn play_track_with_context(uri: String, context_uri: String, position:
         }
     };
 
-    // Device activation code...
-    // ...existing code...
+
 
     let client = Client::new();
     web_sys::console::log_1(&"Sending play request with context...".into());

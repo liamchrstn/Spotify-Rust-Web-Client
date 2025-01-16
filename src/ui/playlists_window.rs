@@ -12,6 +12,7 @@ pub fn show_playlists_window(ctx: &Context) {
     let view_mode = state.playlist_view_mode;  // Use playlist-specific view mode
     let mut window_size = state.playlists_window_size;
     let mut playlists_window_open = state.playlists_window_open;
+    let user_id = state.user_id.clone().unwrap_or_default(); // Convert to String
 
     let window = egui::Window::new("Your Playlists")
         .open(&mut playlists_window_open)
@@ -106,7 +107,8 @@ pub fn show_playlists_window(ctx: &Context) {
                         playlists.len(), 
                         playlists.len() as i32, 
                         ListViewMode::Playlists,
-                        None  // Add the missing playlist_id argument
+                        None,
+                        &user_id  // Add the missing user_id argument
                     );
                 },
             }
