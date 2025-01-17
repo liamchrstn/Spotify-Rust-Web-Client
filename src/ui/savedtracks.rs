@@ -76,11 +76,13 @@ pub fn show_saved_tracks_window(ctx: &Context) {
             ui.add_space(8.0);
 
             // Filter tracks based on search text
-            let filtered_tracks: Vec<_> = tracks.iter()
-                .filter(|(track, artists, _, _)| {
+            let filtered_tracks: Vec<(usize, &(String, String, String, String))> = tracks
+                .iter()
+                .enumerate()
+                .filter(|(_, (track, artists, _, _))| {
                     let search_lower = state.search_text.to_lowercase();
-                    track.to_lowercase().contains(&search_lower) || 
-                    artists.to_lowercase().contains(&search_lower)
+                    track.to_lowercase().contains(&search_lower)
+                        || artists.to_lowercase().contains(&search_lower)
                 })
                 .collect();
 

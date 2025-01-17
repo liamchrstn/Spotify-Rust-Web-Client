@@ -23,14 +23,20 @@ pub fn show_playlist_tracks_windows(ctx: &Context) {
             .show(ctx, |ui| {
                 match view_mode {
                     ViewMode::List => {
-                        egui::ScrollArea::vertical().show(ui, |ui| {
-                            show_list_view(ui, &tracks.iter().collect::<Vec<_>>(), ListViewMode::Tracks, Some(&playlist_id), &user_id);
-                        });
-                    }
+                        let enumerated: Vec<_> = tracks.iter().enumerate().collect();
+                        show_list_view(
+                            ui,
+                            &enumerated,
+                            ListViewMode::Tracks,
+                            Some(&playlist_id),
+                            &user_id
+                        );
+                    },
                     ViewMode::Grid => {
+                        let enumerated: Vec<_> = tracks.iter().enumerate().collect();
                         show_grid_view(
                             ui,
-                            &tracks.iter().collect::<Vec<_>>(),
+                            &enumerated,
                             None,
                             tracks.len(),
                             tracks.len() as i32,
