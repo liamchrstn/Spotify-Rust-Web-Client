@@ -1,6 +1,7 @@
 use egui::Ui;
 use egui_extras::{TableBuilder, Column};
 use crate::api_request::imagerender::get_or_load_image;
+use egui::CursorIcon;
 
 #[derive(PartialEq)]
 pub enum ListViewMode {
@@ -73,7 +74,7 @@ pub fn show_list_view(ui: &mut Ui, tracks: &[(usize, &(String, String, String, S
         }).response;
 
         // Make the row clickable
-        if row_response.interact(egui::Sense::click()).clicked() {
+        if row_response.interact(egui::Sense::click()).on_hover_cursor(CursorIcon::PointingHand).clicked() {
             match mode {
                 ListViewMode::Tracks => {
                     let uri = uri_or_id.clone();
@@ -207,7 +208,7 @@ pub fn show_grid_view(ui: &mut Ui, tracks: &[(usize, &(String, String, String, S
                             row.col(|_| {});  // Empty first column
                             row.col(|ui| {
                                 // Center the button in the middle column
-                                if ui.button("Load More").clicked() {
+                                if ui.button("Load More").on_hover_cursor(CursorIcon::PointingHand).clicked() {
                                     let token = web_sys::window()
                                         .and_then(|window| window.local_storage().ok().flatten())
                                         .and_then(|storage| storage.get_item("spotify_token").ok().flatten())

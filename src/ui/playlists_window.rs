@@ -1,6 +1,7 @@
 use egui::Context;
 use crate::ui::app_state::{APP_STATE, ViewMode};
 use crate::ui::tracks_ui::{show_grid_view, ListViewMode, render_square_with_image};
+use egui::CursorIcon;
 
 pub fn show_playlists_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
@@ -22,12 +23,12 @@ pub fn show_playlists_window(ctx: &Context) {
             // Add view mode controls
             ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.toggle_value(&mut (view_mode == ViewMode::List), &format!("{} List", egui_phosphor::bold::LIST)).clicked() {
+                    if ui.toggle_value(&mut (view_mode == ViewMode::List), &format!("{} List", egui_phosphor::bold::LIST)).on_hover_cursor(CursorIcon::PointingHand).clicked() {
                         state.playlist_view_mode = ViewMode::List;
                         window_size = (400.0, 600.0);
                     }
                     ui.add_space(8.0);
-                    if ui.toggle_value(&mut (view_mode == ViewMode::Grid), &format!("{} Grid", egui_phosphor::bold::SQUARES_FOUR)).clicked() {
+                    if ui.toggle_value(&mut (view_mode == ViewMode::Grid), &format!("{} Grid", egui_phosphor::bold::SQUARES_FOUR)).on_hover_cursor(CursorIcon::PointingHand).clicked() {
                         window_size = (800.0, 600.0);
                         state.playlist_view_mode = ViewMode::Grid;
                     }
@@ -73,7 +74,7 @@ pub fn show_playlists_window(ctx: &Context) {
                             }).response;
 
                             // Make the row clickable
-                            if row_response.interact(egui::Sense::click()).clicked() {
+                            if row_response.interact(egui::Sense::click()).on_hover_cursor(CursorIcon::PointingHand).clicked() {
                                 let id = id.clone();
                                 let token = web_sys::window()
                                     .and_then(|window| window.local_storage().ok().flatten())

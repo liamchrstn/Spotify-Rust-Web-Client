@@ -7,6 +7,7 @@ use super::savedtracks::show_saved_tracks_window;
 use wasm_bindgen::JsCast;  // Add JsCast trait for dyn_ref
 use crate::api_request::playlists::fetch_playlists;
 use crate::ui::playlist_tracks::show_playlist_tracks_windows;
+use egui::CursorIcon; // new import
 
 #[derive(Default)]
 pub struct SpotifyApp {
@@ -23,10 +24,10 @@ impl eframe::App for SpotifyApp {
                         ui.heading(format!("Welcome, {}", name));
                         
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            if ui.button("⛭").clicked() {
+                            if ui.button("⛭").on_hover_cursor(CursorIcon::PointingHand).clicked() {
                                 state.settings_window_open = true;
                             }
-                            if ui.button("Logout").clicked() {
+                            if ui.button("Logout").on_hover_cursor(CursorIcon::PointingHand).clicked() {
                                 if let Some(window) = window() {
                                     if let Ok(local_storage) = window.local_storage() {
                                         if let Some(storage) = local_storage {
@@ -45,7 +46,7 @@ impl eframe::App for SpotifyApp {
 
             egui::CentralPanel::default().show(ctx, |ui| {
                 if let Some(_) = &state.username {                 
-                    if ui.button("View Your Liked Songs").clicked() {
+                    if ui.button("View Your Liked Songs").on_hover_cursor(CursorIcon::PointingHand).clicked() {
                         state.show_tracks = true;
                         state.tracks_window_open = true;
                         let token = ACCESS_TOKEN.lock().unwrap().clone().unwrap();
@@ -54,7 +55,7 @@ impl eframe::App for SpotifyApp {
                         });
                     }
 
-                    if ui.button("View Your Playlists").clicked() {
+                    if ui.button("View Your Playlists").on_hover_cursor(CursorIcon::PointingHand).clicked() {
                         let token = crate::api_request::token::ACCESS_TOKEN
                             .lock().unwrap().clone().unwrap_or_default();
                         wasm_bindgen_futures::spawn_local(async move {
@@ -62,12 +63,12 @@ impl eframe::App for SpotifyApp {
                         });
                     }
                     
-                    if ui.button("Create Collage").clicked() {
+                    if ui.button("Create Collage").on_hover_cursor(CursorIcon::PointingHand).clicked() {
                         // Open collage creation window
                         state.collage_window_open = true;
                     }
 
-                    if ui.button("Show Player").clicked() { // new button
+                    if ui.button("Show Player").on_hover_cursor(CursorIcon::PointingHand).clicked() { // new button
                         self.show_player = true;
                         state.player_window_open = true;
                         
@@ -111,7 +112,9 @@ impl eframe::App for SpotifyApp {
                 } else {
                     ui.vertical_centered(|ui| {
                         ui.add_space(100.0); // Add some space from the top
-                        if ui.add_sized([200.0, 50.0], egui::Button::new("Connect with Spotify")).clicked() {
+                        if ui.add_sized([200.0, 50.0], egui::Button::new("Connect with Spotify"))
+                            .on_hover_cursor(CursorIcon::PointingHand)
+                            .clicked() {
                             loginWithSpotify();
                         }
                     });
@@ -121,7 +124,7 @@ impl eframe::App for SpotifyApp {
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                     let label = egui::Label::new("liamchristian.com")
                         .sense(egui::Sense::click());
-                    if ui.add(label).clicked() {
+                    if ui.add(label).on_hover_cursor(CursorIcon::PointingHand).clicked() {
                         if let Some(window) = web_sys::window() {
                             let _ = window.open_with_url("https://liamchristian.com/");
                         }

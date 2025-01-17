@@ -1,6 +1,7 @@
 use egui::Context;
 use crate::ui::{APP_STATE, tracks_ui::{show_list_view, show_grid_view, ListViewMode}};
 use crate::ui::app_state::ViewMode;
+use egui::CursorIcon;
 
 pub fn show_playlist_tracks_windows(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
@@ -19,7 +20,7 @@ pub fn show_playlist_tracks_windows(ctx: &Context) {
                 // Add view mode controls
                 ui.horizontal(|ui| {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.toggle_value(&mut (view_mode == ViewMode::List), &format!("{} List", egui_phosphor::bold::LIST)).clicked() {
+                        if ui.toggle_value(&mut (view_mode == ViewMode::List), &format!("{} List", egui_phosphor::bold::LIST)).on_hover_cursor(CursorIcon::PointingHand).clicked() {
                             let mut state = APP_STATE.lock().unwrap();
                             if let Some(window_state) = state.playlist_windows.iter_mut().find(|w| w.0 == playlist_id_clone) {
                                 window_state.3 = ViewMode::List;
@@ -27,7 +28,7 @@ pub fn show_playlist_tracks_windows(ctx: &Context) {
                             view_mode = ViewMode::List;
                         }
                         ui.add_space(8.0);
-                        if ui.toggle_value(&mut (view_mode == ViewMode::Grid), &format!("{} Grid", egui_phosphor::bold::SQUARES_FOUR)).clicked() {
+                        if ui.toggle_value(&mut (view_mode == ViewMode::Grid), &format!("{} Grid", egui_phosphor::bold::SQUARES_FOUR)).on_hover_cursor(CursorIcon::PointingHand).clicked() {
                             let mut state = APP_STATE.lock().unwrap();
                             if let Some(window_state) = state.playlist_windows.iter_mut().find(|w| w.0 == playlist_id_clone) {
                                 window_state.3 = ViewMode::Grid;

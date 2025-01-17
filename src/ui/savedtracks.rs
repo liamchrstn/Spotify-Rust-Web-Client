@@ -1,6 +1,7 @@
 use super::app_state::{ViewMode, APP_STATE};
 use egui::Context;
 use crate::ui::tracks_ui::{show_list_view, show_grid_view, ListViewMode};
+use egui::CursorIcon;
 
 pub fn show_saved_tracks_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
@@ -61,12 +62,12 @@ pub fn show_saved_tracks_window(ctx: &Context) {
 
                 // Push view controls to the right
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.toggle_value(&mut (view_mode == ViewMode::List), &format!("{} List", egui_phosphor::bold::LIST)).clicked() {
+                    if ui.toggle_value(&mut (view_mode == ViewMode::List), &format!("{} List", egui_phosphor::bold::LIST)).on_hover_cursor(CursorIcon::PointingHand).clicked() {
                         state.view_mode = ViewMode::List;  // Only changes saved tracks view mode
                         window_size = (400.0, 600.0);
                     }
                     ui.add_space(8.0);
-                    if ui.toggle_value(&mut (view_mode == ViewMode::Grid), &format!("{} Grid", egui_phosphor::bold::SQUARES_FOUR)).clicked() {
+                    if ui.toggle_value(&mut (view_mode == ViewMode::Grid), &format!("{} Grid", egui_phosphor::bold::SQUARES_FOUR)).on_hover_cursor(CursorIcon::PointingHand).clicked() {
                         window_size = (800.0, 600.0);
                         state.view_mode = ViewMode::Grid;  // Only changes saved tracks view mode
                     }
@@ -98,7 +99,7 @@ pub fn show_saved_tracks_window(ctx: &Context) {
                                     ui.add_space(16.0);
                                     ui.horizontal(|ui| {
                                         ui.add_space(ui.available_width() / 2.0 - 50.0); // Center the button
-                                        if ui.button("Load More").clicked() {
+                                        if ui.button("Load More").on_hover_cursor(CursorIcon::PointingHand).clicked() {
                                             let token = web_sys::window()
                                                 .and_then(|window| window.local_storage().ok().flatten())
                                                 .and_then(|storage| storage.get_item("spotify_token").ok().flatten())

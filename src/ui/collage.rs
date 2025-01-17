@@ -5,6 +5,7 @@ use wasm_bindgen_futures::spawn_local;
 use web_sys::{Blob, Url};
 use wasm_bindgen::JsCast;
 use std::io::Cursor;
+use egui::CursorIcon;
 
 fn download_collage(image_data: &[u8]) {
     // Create a Blob from the image data
@@ -126,7 +127,7 @@ pub fn show_collage_window(ctx: &Context) {
 
             // Show preview if we have a generated image
             if let Some(image_data) = &state.collage_image {
-                if ui.button("Download Collage").clicked() {
+                if ui.button("Download Collage").on_hover_cursor(CursorIcon::PointingHand).clicked() {
                     download_collage(image_data);
                 }
                 
@@ -153,7 +154,7 @@ pub fn show_collage_window(ctx: &Context) {
             
             // Only show generate button when not loading
             if !state.collage_loading {
-                if ui.button("Generate New Collage").clicked() {
+                if ui.button("Generate New Collage").on_hover_cursor(CursorIcon::PointingHand).clicked() {
                     // Clone tracks for async closure
                     let tracks = state.saved_tracks.clone();
                     let width = state.collage_width;

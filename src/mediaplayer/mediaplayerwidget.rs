@@ -10,6 +10,7 @@ use wasm_bindgen_futures::spawn_local;
 use js_sys;
 use web_sys::console;
 use egui_extras::{StripBuilder, Size};
+use egui::CursorIcon;
 
 #[wasm_bindgen]
 pub fn is_player_window_open() -> bool {
@@ -150,7 +151,7 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                                             egui::Color32::TRANSPARENT
                                         })
                                 ).on_hover_text(if shuffle_state { "Shuffle On" } else { "Shuffle Off" })
-                                .clicked() {
+                                .on_hover_cursor(CursorIcon::PointingHand).clicked() {
                                     if let Some(token) = get_token() {
                                         spawn_local(async move {
                                             toggle_shuffle(token).await;
@@ -163,7 +164,7 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                                     [40.0, 40.0],
                                     egui::Button::new("⏮").frame(false)
                                 ).on_hover_text("Previous track")
-                                .clicked() {
+                                .on_hover_cursor(CursorIcon::PointingHand).clicked() {
                                     if let Some(token) = get_token() {
                                         spawn_local(async move {
                                             skip_to_previous(token).await;
@@ -202,7 +203,7 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                                     "Play"
                                 });
 
-                                if button.clicked() {
+                                if button.on_hover_cursor(CursorIcon::PointingHand).clicked() {
                                     console::log_1(&"Play button clicked in Rust UI".into());
                                     let _ = js_sys::eval("console.log('Calling playPause'); window.playPause && window.playPause()");
                                 }
@@ -212,7 +213,7 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                                     [40.0, 40.0],
                                     egui::Button::new("⏭").frame(false)
                                 ).on_hover_text("Next track")
-                                .clicked() {
+                                .on_hover_cursor(CursorIcon::PointingHand).clicked() {
                                     if let Some(token) = get_token() {
                                         spawn_local(async move {
                                             skip_to_next(token).await;
@@ -246,7 +247,7 @@ pub fn show_mediaplayer_window(ctx: &egui::Context) {
                                         for i in 0..devices_array.length() {
                                             if let Ok(device) = js_sys::Reflect::get(&devices_array.get(i), &"name".into()) {
                                                 if let Some(name) = device.as_string() {
-                                                    if ui.button(&name).clicked() {
+                                                    if ui.button(&name).on_hover_cursor(CursorIcon::PointingHand).clicked() {
                                                         if let Ok(id) = js_sys::Reflect::get(&devices_array.get(i), &"id".into()) {
                                                             let device_id = id.as_string().unwrap_or_default();
                                                             spawn_local(async move {

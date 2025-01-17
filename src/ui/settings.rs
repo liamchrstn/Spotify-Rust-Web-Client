@@ -2,6 +2,7 @@ use egui::Context;
 use super::app_state::APP_STATE;
 use web_sys::window;
 use crate::api_request::token::SDK_STATUS;
+use egui::CursorIcon;
 
 pub fn show_settings_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
@@ -40,7 +41,7 @@ pub fn show_settings_window(ctx: &Context) {
                 egui::RichText::new("🔒").size(24.0) 
             } else { 
                 egui::RichText::new("🔓").size(24.0)
-            }).clicked() {
+            }).on_hover_cursor(CursorIcon::PointingHand).clicked() {
                 state.settings_window_locked = !state.settings_window_locked;
                 // Save to localStorage
                 if let Some(window) = window() {
@@ -54,7 +55,7 @@ pub fn show_settings_window(ctx: &Context) {
 
             ui.add_space(16.0);
             ui.heading("Window Management");
-            if ui.button("Close All Windows").clicked() {
+            if ui.button("Close All Windows").on_hover_cursor(CursorIcon::PointingHand).clicked() {
                 state.tracks_window_open = false;
                 state.player_window_open = false;
                 state.settings_window_open = false;
@@ -69,7 +70,7 @@ pub fn show_settings_window(ctx: &Context) {
             }
 
             // Add Reset Window Positions button
-            if ui.button("Reset Window Positions").clicked() {
+            if ui.button("Reset Window Positions").on_hover_cursor(CursorIcon::PointingHand).clicked() {
                 state.reset_areas();
                 reset_triggered = true;  // Set the flag when reset is triggered
                 ctx.request_repaint();
@@ -113,7 +114,7 @@ pub fn show_settings_window(ctx: &Context) {
                     egui::Button::new("Apply")
                 );
 
-                if apply_button.clicked() {
+                if apply_button.on_hover_cursor(CursorIcon::PointingHand).clicked() {
                     if let Some(window) = window() {
                         if let Ok(local_storage) = window.local_storage() {
                             if let Some(storage) = local_storage {
@@ -148,7 +149,7 @@ pub fn show_settings_window(ctx: &Context) {
             // Add Reset Settings button
             ui.add_space(16.0);
             ui.heading("Reset Settings");
-            if ui.button("Reset All Settings to Default").clicked() {
+            if ui.button("Reset All Settings to Default").on_hover_cursor(CursorIcon::PointingHand).clicked() {
                 reset_triggered = true;
                 state.player_name = state.original_name.clone();
                 state.settings_window_locked = false;
