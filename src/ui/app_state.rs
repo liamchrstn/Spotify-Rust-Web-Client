@@ -154,8 +154,8 @@ impl AppState {
 
     pub fn constrain_to_central_panel(&self, ctx: &egui::Context) -> egui::Rect {
         let screen_rect = ctx.screen_rect();
-        let sidebar_width = 180.0; // Always reserve space for sidebar
-        let top_bar_height = 30.0; // Adjust this value based on your top bar height
+        let sidebar_width = if self.sidebar_open { 180.0 } else { 0.0 }; // Only reserve space if sidebar is open
+        let top_bar_height = 30.0;
         egui::Rect::from_min_max(
             egui::pos2(sidebar_width, screen_rect.min.y + top_bar_height),
             screen_rect.max,
