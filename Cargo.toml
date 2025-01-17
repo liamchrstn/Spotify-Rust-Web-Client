@@ -3,12 +3,9 @@ name = "spotify-egui"
 version = "0.1.0"
 edition = "2021"
 
-# Build configuration
-[package.metadata.wasm-pack.profile.release]
-wasm-opt = false
-
 # Binary and library configuration
 [lib]
+wasm-opt = true
 crate-type = ["cdylib"]
 name = "spotify_egui"
 path = "src/lib.rs"

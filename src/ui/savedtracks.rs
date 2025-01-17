@@ -5,7 +5,7 @@ use egui::CursorIcon;
 
 pub fn show_saved_tracks_window(ctx: &Context) {
     let state = APP_STATE.lock().unwrap();
-    if (!state.show_tracks) {
+    if !state.show_tracks {
         return;
     }
 
