@@ -46,8 +46,8 @@ pub fn render_square_with_image(ui: &mut Ui, size: f32, image_url: &str) {
 }
 
 // Add a new parameter to pass playlist_id
-pub fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String, String)], mode: ListViewMode, playlist_id: Option<&str>, user_id: &str) {
-    for (track, artists, image_url, uri_or_id) in tracks {
+pub fn show_list_view(ui: &mut Ui, tracks: &[(usize, &(String, String, String, String))], mode: ListViewMode, playlist_id: Option<&str>, user_id: &str) {
+    for (original_index, (track, artists, image_url, uri_or_id)) in tracks {
         let row_response = ui.horizontal(|ui| {
             render_square_with_image(ui, 40.0, image_url);
             
@@ -82,9 +82,9 @@ pub fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String, String)],
                     } else {
                         format!("spotify:user:{}:collection", user_id)
                     };
-                    let position = tracks.iter().position(|(_, _, _, u)| u == uri_or_id);
+                    let position = *original_index;
                     wasm_bindgen_futures::spawn_local(async move {
-                        crate::api_request::track_status::play_track_with_context(uri, context_uri, position.unwrap_or(0)).await;
+                        crate::api_request::track_status::play_track_with_context(uri, context_uri, position).await;
                     });
                 }
                 ListViewMode::Playlists => {
@@ -108,7 +108,7 @@ pub fn show_list_view(ui: &mut Ui, tracks: &[&(String, String, String, String)],
 }
 
 // Update grid view similarly
-pub fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)], total_tracks: Option<i32>, saved_tracks_len: usize, loaded_tracks_count: i32, mode: ListViewMode, playlist_id: Option<&str>, user_id: &str) {
+pub fn show_grid_view(ui: &mut Ui, tracks: &[(usize, &(String, String, String, String))], total_tracks: Option<i32>, saved_tracks_len: usize, loaded_tracks_count: i32, mode: ListViewMode, playlist_id: Option<&str>, user_id: &str) {
     let available_width = ui.available_width();
     let column_width = (available_width / 3.0).max(100.0) - 10.0; // Add padding
     
@@ -127,7 +127,7 @@ pub fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)],
                     body.row(100.0, |mut row| {
                         for col in 0..3 {
                             let idx = row_idx * 3 + col;
-                            if let Some((track, artists, image_url, uri_or_id)) = tracks.get(idx) {
+                            if let Some((original_index, (track, artists, image_url, uri_or_id))) = tracks.get(idx) {
                                 row.col(|ui| {
                                     ui.scope(|ui| {
                                         draw_vlines(ui, 100.0, col > 0, |ui| {
@@ -168,9 +168,9 @@ pub fn show_grid_view(ui: &mut Ui, tracks: &[&(String, String, String, String)],
                                                             } else {
                                                                 format!("spotify:user:{}:collection", user_id)
                                                             };
-                                                            let position = tracks.iter().position(|(_, _, _, u)| u == uri_or_id);
+                                                            let position = *original_index;
                                                             wasm_bindgen_futures::spawn_local(async move {
-                                                                crate::api_request::track_status::play_track_with_context(uri, context_uri, position.unwrap_or(0)).await;
+                                                                crate::api_request::track_status::play_track_with_context(uri, context_uri, position).await;
                                                             });
                                                         }
                                                         ListViewMode::Playlists => {

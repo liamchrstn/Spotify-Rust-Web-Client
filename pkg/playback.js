@@ -72,7 +72,7 @@ async function updatePlaybackState() {
             const state = await player.getCurrentState();
             if (state) {
                 // We're the active device, no need to make API call
-                console.log('Using SDK state for active device');
+                //console.log('Using SDK state for active device');
                 return;
             }
         }

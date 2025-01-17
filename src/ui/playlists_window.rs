@@ -92,23 +92,16 @@ pub fn show_playlists_window(ctx: &Context) {
                     });
                 },
                 ViewMode::Grid => {
-                    let filtered: Vec<(String, String, String, String)> = playlists
-                        .iter()
-                        .map(|(name, owner, image_url, id, total_tracks)| 
-                            (format!("{}\n{} tracks", name, total_tracks), owner.clone(), image_url.clone(), id.clone())
-                        )
-                        .collect();
-                    
-                    let references: Vec<&(String, String, String, String)> = filtered.iter().collect();
+                    let enumerated: Vec<_> = filtered.iter().enumerate().collect();
                     show_grid_view(
-                        ui, 
-                        &references, 
-                        None, 
-                        playlists.len(), 
-                        playlists.len() as i32, 
+                        ui,
+                        &enumerated,
+                        None,
+                        playlists.len(),
+                        playlists.len() as i32,
                         ListViewMode::Playlists,
                         None,
-                        &user_id  // Add the missing user_id argument
+                        &user_id
                     );
                 },
             }
