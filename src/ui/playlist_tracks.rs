@@ -2,12 +2,6 @@ use egui::Context;
 use crate::ui::{APP_STATE, tracks_ui::{show_list_view, show_grid_view, ListViewMode}};
 use crate::ui::app_state::ViewMode;
 
-// Fetch playlist tracks from Spotify (replace endpoint params as needed).
-pub async fn fetch_playlist_tracks(playlist_id: String, token: String) {
-    // ...call Spotify /playlists/{playlist_id}/tracks endpoint...
-    // ...store results in APP_STATE.lock().unwrap().playlist_tracks...
-}
-
 pub fn show_playlist_tracks_windows(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
     let playlist_windows = state.playlist_windows.clone();

@@ -96,7 +96,7 @@ pub async fn load_more_tracks(token: String, is_initial: bool) {
     }
 
     // If storage is empty or we've loaded all stored tracks, fetch from API
-    let mut state = APP_STATE.lock().unwrap();  // Keep as mut
+    let state = APP_STATE.lock().unwrap();  // Keep as mut
     let offset = state.loaded_tracks_count as usize;
     let desired_limit = if state.tracks_per_load >= 1000 {
         if let Some(total) = state.total_tracks {
