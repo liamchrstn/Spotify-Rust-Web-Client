@@ -28,6 +28,7 @@ pub fn show_settings_window(ctx: &Context) {
         ])
         .default_width(280.0)
         .movable(!state.settings_window_locked)
+        .constrain_to(state.constrain_to_central_panel(ctx)) // Constrain to central panel
         .show(ctx, |ui| {
             ui.heading("Appearance");
             ui.horizontal(|ui| {

@@ -55,21 +55,31 @@ fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
 }
 
 pub fn show_collage_window(ctx: &Context) {
-    let mut state = APP_STATE.lock().unwrap();
-    let mut collage_window_open = state.collage_window_open;
-    if !collage_window_open {
+    let state = APP_STATE.lock().unwrap();
+    if !state.collage_window_open {
         return;
     }
 
-    egui::Window::new("Create Collage")
-        .default_pos(state.collage_window_pos)
+    let mut collage_window_open = state.collage_window_open;
+    let collage_position = state.collage_window_pos;
+    let constrain_rect = state.constrain_to_central_panel(ctx);
+    let collage_loading = state.collage_loading;
+    let progress = state.progress;
+    let saved_tracks = state.saved_tracks.clone();
+    let collage_image = state.collage_image.clone();
+    drop(state);
+
+    let window = egui::Window::new("Collage")
+        .open(&mut collage_window_open)
+        .current_pos(collage_position)
+        .default_size((800.0, 600.0))
         .resizable(true)
-        .collapsible(true)
-        .open(&mut collage_window_open) // Use local variable
+        .constrain_to(constrain_rect)
         .show(ctx, |ui| {
             ui.label("Create a collage from your liked songs' album artwork");
 
             ui.collapsing("Collage Settings", |ui| {
+                let mut state = APP_STATE.lock().unwrap();
                 // Add input fields for width and height
                 ui.horizontal(|ui| {
                     ui.label("Width:");
@@ -123,10 +133,11 @@ pub fn show_collage_window(ctx: &Context) {
                         });
                     },
                 }
+                drop(state);
             });
 
             // Show preview if we have a generated image
-            if let Some(image_data) = &state.collage_image {
+            if let Some(image_data) = &collage_image {
                 if ui.button("Download Collage").on_hover_cursor(CursorIcon::PointingHand).clicked() {
                     download_collage(image_data);
                 }
@@ -153,9 +164,9 @@ pub fn show_collage_window(ctx: &Context) {
             }
             
             // Only show generate button when not loading
-            if !state.collage_loading {
+            if !collage_loading {
                 if ui.button("Generate New Collage").on_hover_cursor(CursorIcon::PointingHand).clicked() {
-                    // Clone tracks for async closure
+                    let mut state = APP_STATE.lock().unwrap();
                     let tracks = state.saved_tracks.clone();
                     let width = state.collage_width;
                     let height = state.collage_height;
@@ -219,11 +230,16 @@ pub fn show_collage_window(ctx: &Context) {
                 }
             }
             
-            if state.collage_loading {
-                let progress_text = format!("{}/{}", (state.progress * state.saved_tracks.len() as f32).round() as i32, state.saved_tracks.len());
-                ui.add(ProgressBar::new(state.progress).animate(true).text(progress_text));
+            if collage_loading {
+                let progress_text = format!("{}/{}", (progress * saved_tracks.len() as f32).round() as i32, saved_tracks.len());
+                ui.add(ProgressBar::new(progress).animate(true).text(progress_text));
             }
         });
 
+    let mut state = APP_STATE.lock().unwrap();
     state.collage_window_open = collage_window_open;
+    if let Some(resp) = window {
+        let r = resp.response.rect;
+        state.collage_window_pos = (r.min.x, r.min.y);
+    }
 }

@@ -9,28 +9,32 @@ pub fn show_playlists_window(ctx: &Context) {
         return;
     }
 
-    let playlists = state.playlists.clone();
-    let view_mode = state.playlist_view_mode;  // Use playlist-specific view mode
-    let mut window_size = state.playlists_window_size;
     let mut playlists_window_open = state.playlists_window_open;
-    let user_id = state.user_id.clone().unwrap_or_default(); // Convert to String
+    let window_pos = state.playlists_window_pos;
+    let mut window_size = state.playlists_window_size; // Make mutable
+    let constrain_rect = state.constrain_to_central_panel(ctx);
+    let playlists = state.playlists.clone();
+    let user_id = state.user_id.clone().unwrap_or_default();
+    let mut view_mode = state.playlist_view_mode;
+    drop(state);
 
     let window = egui::Window::new("Your Playlists")
         .open(&mut playlists_window_open)
-        .current_pos([state.playlists_window_pos.0, state.playlists_window_pos.1])
+        .current_pos([window_pos.0, window_pos.1])
         .default_size(window_size)
+        .constrain_to(constrain_rect)
         .show(ctx, |ui| {
             // Add view mode controls
             ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if ui.toggle_value(&mut (view_mode == ViewMode::List), &format!("{} List", egui_phosphor::bold::LIST)).on_hover_cursor(CursorIcon::PointingHand).clicked() {
-                        state.playlist_view_mode = ViewMode::List;
-                        window_size = (400.0, 600.0);
+                        view_mode = ViewMode::List;
+                        window_size = (400.0, 600.0); // Allowed since mutable
                     }
                     ui.add_space(8.0);
                     if ui.toggle_value(&mut (view_mode == ViewMode::Grid), &format!("{} Grid", egui_phosphor::bold::SQUARES_FOUR)).on_hover_cursor(CursorIcon::PointingHand).clicked() {
-                        window_size = (800.0, 600.0);
-                        state.playlist_view_mode = ViewMode::Grid;
+                        window_size = (800.0, 600.0); // Allowed since mutable
+                        view_mode = ViewMode::Grid;
                     }
                     ui.label("View:");
                 });
@@ -39,7 +43,7 @@ pub fn show_playlists_window(ctx: &Context) {
 
             let filtered: Vec<(String, String, String, String)> = playlists
                 .iter()
-                .map(|(name, owner, image_url, id, total_tracks)| 
+                .map(|(name, owner, image_url, id, _total_tracks)|  // Prefix total_tracks
                     (name.clone(), owner.clone(), image_url.clone(), id.clone())
                 )
                 .collect();
@@ -108,10 +112,11 @@ pub fn show_playlists_window(ctx: &Context) {
         }
     );
 
+    let mut state = APP_STATE.lock().unwrap();
+    state.playlists_window_open = playlists_window_open;
+    state.playlists_window_size = window_size; // Update window_size in state
     if let Some(resp) = window {
         let r = resp.response.rect;
         state.playlists_window_pos = (r.min.x, r.min.y);
     }
-
-    state.playlists_window_open = playlists_window_open;
 }
