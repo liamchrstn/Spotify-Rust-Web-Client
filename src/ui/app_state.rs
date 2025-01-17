@@ -134,7 +134,7 @@ impl Default for AppState {
             user_id: None, // Initialize the new field
             settings_initialized: false,                  // Initialize new fields
             original_name: String::new(),                 // Initialize new fields
-            sidebar_open: false, // Initialize the new field
+            sidebar_open: true, // Initialize the new field
         }
     }
 }

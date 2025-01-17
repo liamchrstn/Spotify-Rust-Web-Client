@@ -116,6 +116,19 @@ impl eframe::App for SpotifyApp {
                                     }
                                 });
                             }
+                            
+                            ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
+                                let label = egui::Label::new("🏠")
+                                    .sense(egui::Sense::click());
+                                if ui.add(label)
+                                    .on_hover_text("Return to homepage")
+                                    .on_hover_cursor(CursorIcon::PointingHand)
+                                    .clicked() {
+                                    if let Some(window) = web_sys::window() {
+                                        let _ = window.open_with_url("https://liamchristian.com/");
+                                    }
+                                }
+                            });
                         } 
                     });
             }
@@ -123,7 +136,7 @@ impl eframe::App for SpotifyApp {
             egui::CentralPanel::default().show(ctx, |ui| {
                 // Only show sidebar toggle when logged in
                 if state.username.is_some() {
-                    if ui.button(if self.sidebar_open { "Hide Sidebar" } else { "Show Sidebar" }).clicked() {
+                    if ui.button(if self.sidebar_open { "⬅" } else { "➡" }).clicked() {
                         self.sidebar_open = !self.sidebar_open;
                     }
                 }
@@ -140,17 +153,6 @@ impl eframe::App for SpotifyApp {
                         }
                     });
                 }
-
-                // Add homepage link at the bottom
-                ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
-                    let label = egui::Label::new("liamchristian.com")
-                        .sense(egui::Sense::click());
-                    if ui.add(label).on_hover_cursor(CursorIcon::PointingHand).clicked() {
-                        if let Some(window) = web_sys::window() {
-                            let _ = window.open_with_url("https://liamchristian.com/");
-                        }
-                    }
-                });
             });
         }
 
