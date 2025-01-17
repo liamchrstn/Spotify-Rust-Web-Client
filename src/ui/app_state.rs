@@ -76,7 +76,7 @@ impl Default for AppState {
         let player_name = local_storage
             .as_ref()
             .and_then(|storage| storage.get_item("player_name").ok().flatten())
-            .unwrap_or_else(|| "Web Playback SDK Quick Start Player".to_string());
+            .unwrap_or_else(|| "Rustify Web Player".to_string());
 
         let tracks_per_load = local_storage
             .as_ref()

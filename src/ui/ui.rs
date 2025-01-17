@@ -12,6 +12,7 @@ use egui::CursorIcon; // new import
 #[derive(Default)]
 pub struct SpotifyApp {
     pub show_player: bool, // new field
+    pub sidebar_open: bool, // new field
 }
 
 impl eframe::App for SpotifyApp {
@@ -44,71 +45,85 @@ impl eframe::App for SpotifyApp {
                 });
             });
 
-            egui::CentralPanel::default().show(ctx, |ui| {
-                if let Some(_) = &state.username {                 
-                    if ui.button("View Your Liked Songs").on_hover_cursor(CursorIcon::PointingHand).clicked() {
-                        state.show_tracks = true;
-                        state.tracks_window_open = true;
-                        let token = ACCESS_TOKEN.lock().unwrap().clone().unwrap();
-                        spawn_local(async {
-                            fetch_saved_tracks(token).await;
-                        });
-                    }
-
-                    if ui.button("View Your Playlists").on_hover_cursor(CursorIcon::PointingHand).clicked() {
-                        let token = crate::api_request::token::ACCESS_TOKEN
-                            .lock().unwrap().clone().unwrap_or_default();
-                        wasm_bindgen_futures::spawn_local(async move {
-                            fetch_playlists(token).await;
-                        });
-                    }
-                    
-                    if ui.button("Create Collage").on_hover_cursor(CursorIcon::PointingHand).clicked() {
-                        // Open collage creation window
-                        state.collage_window_open = true;
-                    }
-
-                    if ui.button("Show Player").on_hover_cursor(CursorIcon::PointingHand).clicked() { // new button
-                        self.show_player = true;
-                        state.player_window_open = true;
-                        
-                        // Check for active devices on player show
-                        use crate::api_request::track_status::{has_active_devices, get_devices};
-                        spawn_local(async {
-                            // First check for active devices
-                            has_active_devices().await;
-                            
-                            // Wait a bit for the check to complete
-                            gloo_timers::future::TimeoutFuture::new(500).await;
-                            
-                            // Get window state to check result
-                            if let Some(window) = web_sys::window() {
-                                if let Ok(has_active) = js_sys::Reflect::get(&window, &"hasActiveDevices".into()) {
-                                    if !has_active.as_bool().unwrap_or(true) {
-                                        // No active devices, get available devices
-                                        get_devices().await;
-                                        
-                                        // Wait for devices to be fetched
-                                        gloo_timers::future::TimeoutFuture::new(500).await;
-                                        
-                                        // Get first available device and activate it
-                                        if let Ok(devices) = js_sys::Reflect::get(&window, &"availableDevices".into()) {
-                                            if let Some(devices_array) = devices.dyn_ref::<js_sys::Array>() {
-                                                if devices_array.length() > 0 {
-                                                    if let Ok(device) = js_sys::Reflect::get(&devices_array.get(0), &"id".into()) {
-                                                        if let Some(device_id) = device.as_string() {
-                                                            use crate::api_request::track_status::activate_device;
-                                                            activate_device(device_id).await;
+            // New sidebar for buttons
+            if self.sidebar_open {
+                egui::SidePanel::left("left_sidebar")
+                    .resizable(false)
+                    .min_width(180.0)
+                    .max_width(180.0)
+                    .show(ctx, |ui| {
+                        if let Some(_) = &state.username {
+                            if ui.button("View Your Liked Songs").clicked() {
+                                state.show_tracks = true;
+                                state.tracks_window_open = true;
+                                let token = ACCESS_TOKEN.lock().unwrap().clone().unwrap();
+                                spawn_local(async {
+                                    fetch_saved_tracks(token).await;
+                                });
+                            }
+                            if ui.button("View Your Playlists").clicked() {
+                                let token = crate::api_request::token::ACCESS_TOKEN
+                                    .lock().unwrap().clone().unwrap_or_default();
+                                wasm_bindgen_futures::spawn_local(async move {
+                                    fetch_playlists(token).await;
+                                });
+                            }
+                            if ui.button("Create Collage").clicked() {
+                                state.collage_window_open = true;
+                            }
+                            if ui.button("Show Player").clicked() {
+                                self.show_player = true;
+                                state.player_window_open = true;
+                                
+                                // Check for active devices on player show
+                                use crate::api_request::track_status::{has_active_devices, get_devices};
+                                spawn_local(async {
+                                    // First check for active devices
+                                    has_active_devices().await;
+                                    
+                                    // Wait a bit for the check to complete
+                                    gloo_timers::future::TimeoutFuture::new(500).await;
+                                    
+                                    // Get window state to check result
+                                    if let Some(window) = web_sys::window() {
+                                        if let Ok(has_active) = js_sys::Reflect::get(&window, &"hasActiveDevices".into()) {
+                                            if !has_active.as_bool().unwrap_or(true) {
+                                                // No active devices, get available devices
+                                                get_devices().await;
+                                                
+                                                // Wait for devices to be fetched
+                                                gloo_timers::future::TimeoutFuture::new(500).await;
+                                                
+                                                // Get first available device and activate it
+                                                if let Ok(devices) = js_sys::Reflect::get(&window, &"availableDevices".into()) {
+                                                    if let Some(devices_array) = devices.dyn_ref::<js_sys::Array>() {
+                                                        if devices_array.length() > 0 {
+                                                            if let Ok(device) = js_sys::Reflect::get(&devices_array.get(0), &"id".into()) {
+                                                                if let Some(device_id) = device.as_string() {
+                                                                    use crate::api_request::track_status::activate_device;
+                                                                    activate_device(device_id).await;
+                                                                }
+                                                            }
                                                         }
                                                     }
                                                 }
                                             }
                                         }
                                     }
-                                }
+                                });
                             }
-                        });
-                    }
+                        } 
+                    });
+            }
+
+            egui::CentralPanel::default().show(ctx, |ui| {
+                // Toggle button for sidebar
+                if ui.button(if self.sidebar_open { "Hide Sidebar" } else { "Show Sidebar" }).clicked() {
+                    self.sidebar_open = !self.sidebar_open;
+                }
+
+                if let Some(_) = &state.username {                 
+                    // Removed buttons from here
                 } else {
                     ui.vertical_centered(|ui| {
                         ui.add_space(100.0); // Add some space from the top
