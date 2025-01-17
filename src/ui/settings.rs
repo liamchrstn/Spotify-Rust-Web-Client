@@ -5,20 +5,15 @@ use crate::api_request::token::SDK_STATUS;
 
 pub fn show_settings_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
-    if (!state.settings_window_open) {
+    if !state.settings_window_open {
         return;
     }
 
-    static mut SETTINGS_INITIALIZED: bool = false;
-    static mut PLAYER_NAME: String = String::new();
-    static mut ORIGINAL_NAME: String = String::new();
-
-    unsafe {
-        if (!SETTINGS_INITIALIZED) {
-            PLAYER_NAME = state.player_name.clone();
-            ORIGINAL_NAME = state.player_name.clone();
-            SETTINGS_INITIALIZED = true;
-        }
+    // Initialize settings if not done
+    if !state.settings_initialized {
+        state.player_name = state.player_name.clone();
+        state.original_name = state.player_name.clone();
+        state.settings_initialized = true;
     }
 
     let mut settings_open = state.settings_window_open;
@@ -108,27 +103,25 @@ pub fn show_settings_window(ctx: &Context) {
             ui.add_space(16.0);
             ui.heading("Web Player Settings");
             ui.horizontal(|ui| {
-                unsafe {
-                    ui.label("Player Name:")
-                    .on_hover_text("Rename the Spotify Player device. This is visible across all Spotify Connect devices.");
-                    ui.text_edit_singleline(&mut PLAYER_NAME);
-                    let name_changed = PLAYER_NAME != ORIGINAL_NAME;
-                    
-                    let apply_button = ui.add_enabled(
-                        name_changed,
-                        egui::Button::new("Apply")
-                    );
+                ui.label("Player Name:")
+                .on_hover_text("Rename the Spotify Player device. This is visible across all Spotify Connect devices.");
+                ui.text_edit_singleline(&mut state.player_name);
+                let name_changed = state.player_name != state.original_name;
+                
+                let apply_button = ui.add_enabled(
+                    name_changed,
+                    egui::Button::new("Apply")
+                );
 
-                    if apply_button.clicked() {
-                        if let Some(window) = window() {
-                            if let Ok(local_storage) = window.local_storage() {
-                                if let Some(storage) = local_storage {
-                                    let _ = storage.set_item("player_name", &PLAYER_NAME);
-                                    // Call JavaScript to reinitialize the player
-                                    let _ = js_sys::eval("window.reinitializePlayer && window.reinitializePlayer()");
-                                    ORIGINAL_NAME = PLAYER_NAME.clone();
-                                    state.player_name = PLAYER_NAME.clone();
-                                }
+                if apply_button.clicked() {
+                    if let Some(window) = window() {
+                        if let Ok(local_storage) = window.local_storage() {
+                            if let Some(storage) = local_storage {
+                                let _ = storage.set_item("player_name", &state.player_name);
+                                // Call JavaScript to reinitialize the player
+                                let _ = js_sys::eval("window.reinitializePlayer && window.reinitializePlayer()");
+                                state.original_name = state.player_name.clone();
+                                state.player_name = state.player_name.clone();
                             }
                         }
                     }
@@ -157,22 +150,19 @@ pub fn show_settings_window(ctx: &Context) {
             ui.heading("Reset Settings");
             if ui.button("Reset All Settings to Default").clicked() {
                 reset_triggered = true;
-                unsafe {
-                    PLAYER_NAME = ORIGINAL_NAME.clone();
-                    state.player_name = ORIGINAL_NAME.clone();
-                    state.settings_window_locked = false;
-                    state.tracks_per_load = 50;
-                    state.reset_areas();
-                }
+                state.player_name = state.original_name.clone();
+                state.settings_window_locked = false;
+                state.tracks_per_load = 50;
+                state.reset_areas();
+                state.settings_initialized = false;
+                
                 if let Some(window) = window() {
                     if let Ok(local_storage) = window.local_storage() {
                         if let Some(storage) = local_storage {
-                            unsafe {
-                                let _ = storage.set_item("player_name", &ORIGINAL_NAME);
-                                let _ = storage.set_item("settings_window_locked", "false");
-                                let _ = storage.set_item("tracks_per_load", "50");
-                                let _ = storage.set_item("view_mode", "Grid");
-                            }
+                            let _ = storage.set_item("player_name", &state.original_name);
+                            let _ = storage.set_item("settings_window_locked", "false");
+                            let _ = storage.set_item("tracks_per_load", "50");
+                            let _ = storage.set_item("view_mode", "Grid");
                         }
                     }
                 }
@@ -184,16 +174,14 @@ pub fn show_settings_window(ctx: &Context) {
     if let Some(resp) = show_response {
         let rect = resp.response.rect;
         // Only update position if we're not actively resetting
-        if (!reset_triggered) {
+        if !reset_triggered {
             state.settings_window_pos = (rect.min.x, rect.min.y);
         }
     }
 
     state.settings_window_open = settings_open;
 
-    if (!settings_open) {
-        unsafe {
-            SETTINGS_INITIALIZED = false;
-        }
+    if !settings_open {
+        state.settings_initialized = false;
     }
 }

@@ -4,7 +4,7 @@ use crate::ui::tracks_ui::{show_list_view, show_grid_view, ListViewMode};
 
 pub fn show_saved_tracks_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
-    if (!state.show_tracks) {
+    if !state.show_tracks {
         return;
     }
 

@@ -91,7 +91,7 @@ pub async fn check_active_playback() -> bool {
 
     match response {
         Ok(resp) => {
-            if (resp.status() == 204) {
+            if resp.status() == 204 {
                 false // No active playback
             } else {
                 resp.status().is_success()

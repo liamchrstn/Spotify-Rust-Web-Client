@@ -58,14 +58,12 @@ pub struct AppState {
     pub playlists_window_open: bool,
     pub playlists_window_size: (f32, f32),
     pub playlists_window_pos: (f32, f32),
-    pub selected_playlist_id: Option<String>,
-    pub selected_playlist_name: Option<String>, // Add this new field
-    pub playlist_tracks: Vec<(String, String, String, String)>,
     pub show_playlist_tracks_window: bool,
     pub playlist_tracks_window_open: bool,
-    pub playlist_tracks_window_pos: (f32, f32),
     pub playlist_windows: Vec<(String, String, Vec<(String, String, String, String)>, ViewMode, bool, (f32, f32))>, // Add this new field
     pub user_id: Option<String>, // Add this new field
+    pub settings_initialized: bool, // New field to track initialization
+    pub original_name: String,      // New field to store the original player name
 }
 
 impl Default for AppState {
@@ -92,11 +90,6 @@ impl Default for AppState {
             .and_then(|val| val.parse().ok())
             .unwrap_or(true);
 
-        let view_mode = local_storage
-            .as_ref()
-            .and_then(|storage| storage.get_item("view_mode").ok().flatten())
-            .map(|val| if val == "List" { ViewMode::List } else { ViewMode::Grid })
-            .unwrap_or(ViewMode::Grid);
 
         AppState { 
             collage_image: None,
@@ -134,14 +127,12 @@ impl Default for AppState {
             playlists_window_open: false,
             playlists_window_size: (400.0, 500.0),
             playlists_window_pos: (300.0, 100.0),
-            selected_playlist_id: None,
-            selected_playlist_name: None, // Initialize the new field
-            playlist_tracks: Vec::new(),
             show_playlist_tracks_window: false,
             playlist_tracks_window_open: false,
-            playlist_tracks_window_pos: (500.0, 100.0),
             playlist_windows: Vec::new(), // Initialize the new field
             user_id: None, // Initialize the new field
+            settings_initialized: false,                  // Initialize new fields
+            original_name: String::new(),                 // Initialize new fields
         }
     }
 }

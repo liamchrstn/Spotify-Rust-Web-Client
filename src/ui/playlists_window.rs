@@ -1,10 +1,10 @@
 use egui::Context;
 use crate::ui::app_state::{APP_STATE, ViewMode};
-use crate::ui::tracks_ui::{show_list_view, show_grid_view, ListViewMode, render_square_with_image};
+use crate::ui::tracks_ui::{show_grid_view, ListViewMode, render_square_with_image};
 
 pub fn show_playlists_window(ctx: &Context) {
     let mut state = APP_STATE.lock().unwrap();
-    if (!state.show_playlists) {
+    if !state.show_playlists {
         return;
     }
 
@@ -43,7 +43,6 @@ pub fn show_playlists_window(ctx: &Context) {
                 )
                 .collect();
             
-            let references: Vec<&(String, String, String, String)> = filtered.iter().collect();
 
             match view_mode {
                 ViewMode::List => {
