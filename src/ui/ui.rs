@@ -116,6 +116,17 @@ impl eframe::App for SpotifyApp {
                         }
                     });
                 }
+
+                // Add homepage link at the bottom
+                ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
+                    let label = egui::Label::new("liamchristian.com")
+                        .sense(egui::Sense::click());
+                    if ui.add(label).clicked() {
+                        if let Some(window) = web_sys::window() {
+                            let _ = window.open_with_url("https://liamchristian.com/");
+                        }
+                    }
+                });
             });
         }
 
