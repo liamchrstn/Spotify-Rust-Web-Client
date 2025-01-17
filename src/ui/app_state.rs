@@ -134,7 +134,7 @@ impl Default for AppState {
             user_id: None, // Initialize the new field
             settings_initialized: false,                  // Initialize new fields
             original_name: String::new(),                 // Initialize new fields
-            sidebar_open: true, // Initialize the new field
+            sidebar_open: true, // Set to true by default
         }
     }
 }
@@ -168,6 +168,7 @@ pub static APP_STATE: Lazy<Mutex<AppState>> = Lazy::new(|| Mutex::new(AppState::
 pub fn set_username(name: String) {
     let mut state = APP_STATE.lock().unwrap();
     state.username = Some(name);
+    state.sidebar_open = true;  // Open sidebar when user logs in
 }
 
 pub fn get_user_id_from_state() -> Option<String> {
