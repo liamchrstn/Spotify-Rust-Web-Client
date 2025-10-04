@@ -38,10 +38,21 @@ This project was born out of a desire for more control over the Spotify user int
 
 ### Spotify API Setup
 
-1.  Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/) and create a new application.
-2.  Note your **Client ID**.
-3.  Go to "Edit Settings" for your app and add a **Redirect URI**. For local development, you can use `http://localhost:8080/` (or whichever port you will use).
-4.  You will need to configure the application with your Client ID. This is likely handled in one of the JavaScript files in the `pkg` directory, such as `auth.js` or `intializer.js`.
+This application uses the Spotify Web API, which requires you to register your own application in the Spotify Developer Dashboard.
+
+1.  **Create a Spotify App**: Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/) and click "Create App".
+2.  **Get Your Client ID**: Once your app is created, you will see your **Client ID**. You'll need this for the next step.
+3.  **Configure Redirect URI**: In your app's settings on the Spotify Dashboard, add a **Redirect URI**. For local development, this is typically `http://localhost:8080/` (or whichever port your local server will use).
+4.  **Update the Configuration**: Open the `pkg/auth.js` file and replace the hardcoded `clientId` and `redirectUri` with your own.
+
+    ```javascript
+    // pkg/auth.js
+
+    const clientId = 'YOUR_SPOTIFY_CLIENT_ID';
+    const redirectUri = 'http://localhost:8080/'; // Must match the one in your Spotify Dashboard
+    ```
+
+    *Note: This project uses the PKCE flow for authentication, so a `client_secret` is not required on the client-side.*
 
 ### Running the Application
 
