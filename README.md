@@ -4,6 +4,9 @@ A web application built with Rust and `egui` that interfaces with the Spotify AP
 
 This application allows users to browse their music library, manage playlists, play tracks, and create image collages from album artwork, all running in the browser through WebAssembly.
 
+<img width="3829" height="1905" alt="spotify-demo" src="https://github.com/user-attachments/assets/41ddd420-0565-4b6a-a1a6-d3579365c9ca" />
+
+
 ## Motivation
 
 This project was born out of a desire for more control over the Spotify user interface. The official Spotify client doesn't allow for viewing multiple panels (like playlists, liked songs, and the music player) simultaneously. This application uses a tileable, windowed approach, making it easier to manage and view different parts of your music library at the same time.
